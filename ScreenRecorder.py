@@ -1,7 +1,7 @@
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np
 import keyboard
-import pathlib
+import pathlib, shutil
 import sys
 
 args = str(sys.argv)
@@ -29,10 +29,10 @@ print(frame_height)
 
 size = (frame_width, frame_height) 
 
-# result = cv2.VideoWriter('video_'+str(log)+'.avi', cv2.VideoWriter_fourcc(*'MJPG'), 60, size) 
 x=0
 
 image_dir = './images/' + driver_camera + '/'
+temp_dir = './temp'
 
 pathlib.Path(image_dir + '0000').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '0001').mkdir(parents=True, exist_ok=True)
@@ -50,7 +50,7 @@ pathlib.Path(image_dir + '1100').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '1101').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '1110').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '1111').mkdir(parents=True, exist_ok=True)
-
+pathlib.Path(temp_dir).mkdir(parents=True, exist_ok=True)
 
 while(not keyboard.is_pressed('q')):
     current_run = []
@@ -65,24 +65,30 @@ while(not keyboard.is_pressed('q')):
         left = int(keyboard.is_pressed('left'))
         right = int(keyboard.is_pressed('right'))
 
+        temp_image = temp_dir + '/' + str(log) + '_' + str(x) + '.jpg'
         image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + str(log) + '_' + str(x) + '.jpg'
         
         frame = ImageGrab.grab()
-        # frame.save(image)
-        # print(image)
+        frame.save(temp_image)
+        print(temp_image)
 
-        current_run.append([frame, image])
+        current_run.append([temp_image, image])
 
         if(keyboard.is_pressed('x')):
             break
 
         if(keyboard.is_pressed('f')):
             for shot in current_run:
-                frame = shot[0]
+                temp_image = shot[0]
                 image = shot[1]
-                frame.save(image)
-                print(image)
+
+                Image.open(temp_image).save(image)
+                # print(image)
             break
+            print(len(shot))
+    
+    shutil.rmtree(pathlib.Path(temp_dir))
+    pathlib.Path(temp_dir).mkdir(parents=True, exist_ok=True)
 
 file = open(logfile, 'w')
 file.write(str(log))
