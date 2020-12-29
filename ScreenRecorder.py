@@ -22,6 +22,8 @@ else:
 
 img = ImageGrab.grab()
 
+# rldu
+
 frame_width = img.width 
 frame_height = img.height
 print(frame_width)
