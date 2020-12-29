@@ -53,6 +53,7 @@ pathlib.Path(image_dir + '1111').mkdir(parents=True, exist_ok=True)
 
 
 while(not keyboard.is_pressed('q')):
+    current_run = []
     if not keyboard.is_pressed('s'):
         continue
 
@@ -67,10 +68,20 @@ while(not keyboard.is_pressed('q')):
         image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + str(log) + '_' + str(x) + '.jpg'
         
         frame = ImageGrab.grab()
-        frame.save(image)
-        print(image)
+        # frame.save(image)
+        # print(image)
+
+        current_run.append([frame, image])
+
+        if(keyboard.is_pressed('x')):
+            break
 
         if(keyboard.is_pressed('f')):
+            for shot in current_run:
+                frame = shot[0]
+                image = shot[1]
+                frame.save(image)
+                print(image)
             break
 
 file = open(logfile, 'w')
