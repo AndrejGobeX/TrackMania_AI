@@ -50,11 +50,13 @@ pathlib.Path(image_dir + '1101').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '1110').mkdir(parents=True, exist_ok=True)
 pathlib.Path(image_dir + '1111').mkdir(parents=True, exist_ok=True)
 
+clear_list = []
 
 while(not keyboard.is_pressed('q')):
     if not keyboard.is_pressed('s'):
         continue
 
+    temp_stint = []
     while(True):
         x=x+1
 
@@ -64,13 +66,22 @@ while(not keyboard.is_pressed('q')):
         right = int(keyboard.is_pressed('right'))
 
         image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + str(log) + '_' + str(x) + '.jpg'
+        temp_stint.append(image)
         
         frame = ImageGrab.grab()
         frame.save(image)
         print(image)
 
+        if(keyboard.is_pressed('x')):
+            clear_list.append(temp_stint)
+            break
+
         if(keyboard.is_pressed('f')):
             break
+
+for stint in clear_list:
+    for image in stint:
+        pathlib.Path(image).unlink()
 
 file = open(logfile, 'w')
 file.write(str(log))
