@@ -1,3 +1,5 @@
+# Image modification functions
+
 from PIL import Image
 import numpy as np
 

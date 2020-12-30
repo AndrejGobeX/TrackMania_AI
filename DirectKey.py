@@ -1,3 +1,5 @@
+# Keyboard input functions
+
 import ctypes, time
 import keyboard
 
@@ -55,5 +57,5 @@ def ReleaseKey(hexKeyCode):
 # CB LEFT
 # CD RIGHT
 
-print(ctypes.windll.user32.GetKeyState(0x90))
+# print(ctypes.windll.user32.GetKeyState(0x90))
 

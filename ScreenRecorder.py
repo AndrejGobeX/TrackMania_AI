@@ -1,3 +1,9 @@
+# Records gameplay
+# s - starts recording
+# f - finishes recording
+# x - same as f, but cancels (no shots will be saved)
+# q - quits recorder
+
 from PIL import ImageGrab
 import numpy as np
 import keyboard
