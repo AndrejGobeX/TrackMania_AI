@@ -14,7 +14,7 @@ no_epochs = 100
 
 # misc
 train = True
-load = False
+load = True
 
 # model = (your favorite engine goes here)
 model = Neptune.Neptune(image_width, image_height)
@@ -31,10 +31,10 @@ y_train = y #y[:train_percentage]
 #x_test = x[train_percentage:len(x)]
 #y_test = y[train_percentage:len(y)]
 
-if train:
-    model.fit(x_train, y_train, no_epochs)
 if load:
     model.load()
+if train:
+    model.fit(x_train, y_train, no_epochs)
 
 for i in range(len(x)):
     print("image: "+str(i))
