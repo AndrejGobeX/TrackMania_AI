@@ -45,4 +45,4 @@ def get_dataset(w, h, camera='third_person', mod=Mods.mod_neptune_crop):
     dataset = (x_set, y_set)
     return dataset
 
-get_dataset(1400, 750)
+# get_dataset(1400, 750)
