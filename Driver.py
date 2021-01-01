@@ -9,10 +9,11 @@ from PIL import ImageGrab
 import keyboard
 import DirectKey
 import numpy as np
+import time
 
 # image dimensions
-image_width = 100
-image_height = 100
+image_width = 10
+image_height = 10
 
 treshold = 0.97
 
@@ -40,6 +41,8 @@ while(not keyboard.is_pressed('q')):
         continue
 
     while(True):
+
+        start = time.time()
 
         # screenshot
         img = ImageGrab.grab()
@@ -73,6 +76,9 @@ while(not keyboard.is_pressed('q')):
             DirectKey.PressKey(KEY_RIGHT)
         else:
             DirectKey.ReleaseKey(KEY_RIGHT)
+
+        stop = time.time()
+        print(stop - start) # reaction time
 
         if keyboard.is_pressed('f'):
             DirectKey.ReleaseKey(KEY_UP)

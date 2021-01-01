@@ -7,8 +7,8 @@ from PIL import Image
 import numpy as np
 
 # image dimensions
-image_width = 100
-image_height = 100
+image_width = 10
+image_height = 10
 
 no_epochs = 100
 

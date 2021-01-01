@@ -14,5 +14,5 @@ def mod_neptune_crop(img, w, h):
 
 """img = Image.open('./images/third_person/0101/5_172.jpg')
 img = img.crop((100, 350, img.size[0]-100, img.size[1]-100)).convert('L')
-img = img.resize((100, 100), Image.ANTIALIAS)
+img = img.resize((20, 20), Image.ANTIALIAS)
 img.show()"""
