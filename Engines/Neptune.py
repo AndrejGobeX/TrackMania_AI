@@ -5,13 +5,14 @@ from PIL import Image
 
 class Neptune():
 
-    def __init__(self, w, h, no_outputs=4):
+    def __init__(self, w, h, no_outputs=4, batch_size=None):
         
         self.name = 'neptune'
         self.checkpoint_path = checkpoint_path='./Checkpoints/' + self.name + '/ch.chpt'
         self.image_width = w
         self.image_height = h
         self.no_outputs = no_outputs
+        self.batch_size = batch_size
 
         self.model = keras.Sequential([
             keras.layers.Conv2D(32,kernel_size=5,activation='relu',
@@ -40,7 +41,8 @@ class Neptune():
     def fit(self, train_input, train_output, no_epochs, validation_data=None):
         self.model.fit(train_input, train_output, epochs=no_epochs,
             validation_data=validation_data,
-            callbacks=[self.checkpoint_callback])
+            callbacks=[self.checkpoint_callback],
+            batch_size=self.batch_size)
 
     def evaluate(self, test_input, test_output):
         self.model.evaluate(test_input, test_output, verbose=1)

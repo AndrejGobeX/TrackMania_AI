@@ -17,7 +17,7 @@ train = True
 load = True
 
 # model = (your favorite engine goes here)
-model = Neptune.Neptune(image_width, image_height)
+model = Neptune.Neptune(image_width, image_height, batch_size=10)
 
 x, y = Dataset.get_dataset(image_width, image_height)
 
@@ -36,7 +36,7 @@ if load:
 if train:
     model.fit(x_train, y_train, no_epochs)
 
-for i in range(len(x)):
+"""for i in range(len(x)):
     print("image: "+str(i))
 
     if(int(y[i][0])==0 and int(y[i][1])==0.0):
@@ -47,3 +47,4 @@ for i in range(len(x)):
     print((prediction[0] > 0.1))
     print(y[i])
     print()
+"""
