@@ -14,7 +14,7 @@ import numpy as np
 image_width = 100
 image_height = 100
 
-treshold = 0.3
+treshold = 0.97
 
 # model = (your favorite engine goes here)
 model = Neptune.Neptune(image_width, image_height)
