@@ -7,10 +7,10 @@ from PIL import Image
 import numpy as np
 
 # image dimensions
-image_width = 10
-image_height = 10
+image_width = 100
+image_height = 100
 
-no_epochs = 100
+no_epochs = 5000
 
 # misc
 train = True
@@ -35,6 +35,8 @@ if load:
     model.load()
 if train:
     model.fit(x_train, y_train, no_epochs)
+
+model.summary()
 
 """for i in range(len(x)):
     print("image: "+str(i))

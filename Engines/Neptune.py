@@ -15,6 +15,7 @@ class Neptune():
         self.batch_size = batch_size
 
         self.model = keras.Sequential([
+            #keras.layers.Input(shape=(self.image_height, self.image_width, 1)),
             keras.layers.Conv2D(32,kernel_size=5,activation='relu',
                 input_shape=(self.image_height, self.image_width, 1)),
             keras.layers.MaxPool2D(),
@@ -54,4 +55,7 @@ class Neptune():
         self.model.summary()
 
     def load(self):
-        self.model.load_weights(self.checkpoint_path)
+        try:
+            self.model.load_weights(self.checkpoint_path)
+        except:
+            print('No checkpoint found')

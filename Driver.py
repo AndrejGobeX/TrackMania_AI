@@ -12,8 +12,8 @@ import numpy as np
 import time
 
 # image dimensions
-image_width = 10
-image_height = 10
+image_width = 100
+image_height = 100
 
 treshold = 0.97
 
