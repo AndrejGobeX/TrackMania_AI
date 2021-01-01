@@ -13,8 +13,8 @@ image_height = 100
 no_epochs = 100
 
 # misc
-train = False
-load = True
+train = True
+load = False
 
 # model = (your favorite engine goes here)
 model = Neptune.Neptune(image_width, image_height)
