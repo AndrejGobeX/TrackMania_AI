@@ -3,7 +3,7 @@
 # f - finishes drive
 # q - quits
 
-from Engines import Neptune
+from Engines.Neptune import Neptune
 import Mods
 from PIL import ImageGrab
 import keyboard
@@ -11,9 +11,14 @@ import DirectKey
 import numpy as np
 import time
 import threading
+import sys
+
+if len(sys.argv) != 2:
+    exit()
+model_name = sys.argv[1]
 
 # model = (your favorite engine goes here)
-model = Neptune.Neptune()
+model = globals()[model_name]()
 model.load()
 
 # image dimensions
@@ -23,7 +28,7 @@ image_height = model.image_height
 treshold = 0.97
 
 # mod = (desired image mod function)
-mod = Mods.mod_neptune_crop
+mod = model.mod_function
 
 up = False
 down = False

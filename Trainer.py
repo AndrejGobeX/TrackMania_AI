@@ -1,14 +1,18 @@
 # Training script
 # import engine at the top of the script
 
-from Engines import Neptune
+from Engines.Neptune import Neptune
 import Mods, Dataset
 from PIL import Image
 import numpy as np
 import sys
 
+if len(sys.argv) != 2:
+    exit()
+model_name = sys.argv[1]
+
 # model = (your favorite engine goes here)
-model = Neptune.Neptune(batch_size=8)
+model = globals()[model_name](batch_size=8)
 
 # image dimensions
 image_width = model.image_width
@@ -20,7 +24,7 @@ no_epochs = 100
 train = True
 load = True
 
-x, y = Dataset.get_dataset(image_width, image_height)
+x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function)
 
 size = len(x)
 train_percentage = size*9//10
