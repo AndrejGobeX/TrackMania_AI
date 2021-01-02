@@ -12,15 +12,15 @@ import numpy as np
 import time
 import threading
 
+# model = (your favorite engine goes here)
+model = Neptune.Neptune()
+model.load()
+
 # image dimensions
-image_width = 300
-image_height = 300
+image_width = model.image_width
+image_height = model.image_height
 
 treshold = 0.97
-
-# model = (your favorite engine goes here)
-model = Neptune.Neptune(image_width, image_height)
-model.load()
 
 # mod = (desired image mod function)
 mod = Mods.mod_neptune_crop

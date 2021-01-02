@@ -5,7 +5,7 @@ from PIL import Image
 
 class Neptune():
 
-    def __init__(self, w, h, no_outputs=4, batch_size=None):
+    def __init__(self, w=30, h=30, no_outputs=4, batch_size=None):
         
         self.name = 'neptune'
         self.checkpoint_path = checkpoint_path='./Checkpoints/' + self.name + '/ch.chpt'

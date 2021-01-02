@@ -7,18 +7,18 @@ from PIL import Image
 import numpy as np
 import sys
 
+# model = (your favorite engine goes here)
+model = Neptune.Neptune(batch_size=8)
+
 # image dimensions
-image_width = 300
-image_height = 300
+image_width = model.image_width
+image_height = model.image_height
 
 no_epochs = 100
 
 # misc
 train = True
 load = True
-
-# model = (your favorite engine goes here)
-model = Neptune.Neptune(image_width, image_height, batch_size=8)
 
 x, y = Dataset.get_dataset(image_width, image_height)
 
