@@ -10,12 +10,13 @@ import keyboard
 import DirectKey
 import numpy as np
 import time
+import threading
 
 # image dimensions
-image_width = 100
-image_height = 100
+image_width = 30
+image_height = 30
 
-treshold = 0.97
+treshold = 0.9
 
 # model = (your favorite engine goes here)
 model = Neptune.Neptune(image_width, image_height)

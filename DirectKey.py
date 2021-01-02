@@ -50,7 +50,10 @@ def ReleaseKey(hexKeyCode):
     x = Input( ctypes.c_ulong(1), ii_ )
     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
-
+def HoldKey(hex_code, interval=0.2):
+    PressKey(hex_code)
+    time.sleep(interval)
+    ReleaseKey(hex_code)
 
 # C8 UP
 # D0 DOWN
