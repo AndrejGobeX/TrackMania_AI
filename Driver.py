@@ -11,12 +11,28 @@ import DirectKey
 import numpy as np
 import time
 import threading
+import sys
+
+w = 30
+h = 30
+t = 0.9
+
+argv = str(sys.argv)
+if len(sys.argv) == 2:
+    w = int(argv[1])
+elif len(sys.argv) == 3:
+    w = int(argv[1])
+    h = int(argv[2])
+elif len(sys.argv) > 3:
+    w = int(argv[1])
+    h = int(argv[2])
+    t = int(argv[3])
 
 # image dimensions
-image_width = 30
-image_height = 30
+image_width = w
+image_height = h
 
-treshold = 0.9
+treshold = t
 
 # model = (your favorite engine goes here)
 model = Neptune.Neptune(image_width, image_height)
