@@ -7,20 +7,9 @@ from PIL import Image
 import numpy as np
 import sys
 
-argv = str(sys.argv)
-if len(sys.argv) == 1:
-    w = 30
-    h = 30
-elif len(sys.argv) == 2:
-    w = int(argv[1])
-    h = w
-else:
-    w = int(argv[1])
-    h = int(argv[2])
-
 # image dimensions
-image_width = w
-image_height = h
+image_width = 300
+image_height = 300
 
 no_epochs = 100
 
