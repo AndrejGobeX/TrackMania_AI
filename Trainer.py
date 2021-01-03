@@ -1,18 +1,27 @@
 # Training script
 # import engine at the top of the script
 
-from Engines.Neptune import Neptune
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 import Mods, Dataset
 from PIL import Image
 import numpy as np
 import sys
 
-if len(sys.argv) != 2:
-    exit()
-model_name = sys.argv[1]
+# first parameter is the name of the engine class
 
-# model = (your favorite engine goes here)
-model = globals()[model_name](batch_size=8)
+if len(sys.argv) != 2:
+    print('Missing engine class.')
+    exit()
+
+# get the engine class
+
+model_name = sys.argv[1]
+engine_module = __import__('Engines.' + model_name, fromlist=[model_name])
+engine_class = getattr(engine_module, model_name)
+
+model = engine_class(batch_size=8)
 
 # image dimensions
 image_width = model.image_width

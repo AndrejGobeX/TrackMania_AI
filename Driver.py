@@ -3,6 +3,9 @@
 # f - finishes drive
 # q - quits
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 from Engines.Neptune import Neptune
 import Mods
 from PIL import ImageGrab
@@ -13,12 +16,19 @@ import time
 import threading
 import sys
 
-if len(sys.argv) != 2:
-    exit()
-model_name = sys.argv[1]
+# first parameter is the name of the engine class
 
-# model = (your favorite engine goes here)
-model = globals()[model_name]()
+if len(sys.argv) != 2:
+    print('Missing engine class.')
+    exit()
+
+# get the engine class
+
+model_name = sys.argv[1]
+engine_module = __import__('Engines.' + model_name, fromlist=[model_name])
+engine_class = getattr(engine_module, model_name)
+
+model = engine_class()
 model.load()
 
 # image dimensions
