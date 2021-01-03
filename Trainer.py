@@ -1,5 +1,6 @@
 # Training script
-# import engine at the top of the script
+# python Trainer.py engine_name [no_epochs]
+# python Trainer.py Neptune 20
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
@@ -11,7 +12,7 @@ import sys
 
 # first parameter is the name of the engine class
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print('Missing engine class.')
     exit()
 
@@ -27,7 +28,11 @@ model = engine_class(batch_size=8)
 image_width = model.image_width
 image_height = model.image_height
 
+# second parameter is the number of epochs, if missing defaults to 100
 no_epochs = 100
+if len(sys.argv) == 3:
+    no_epochs = int(sys.argv[2])
+
 
 # misc
 train = True
