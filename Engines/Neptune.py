@@ -2,7 +2,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
 from PIL import Image
-#import Mods
+import Mods
 
 class Neptune():
 
@@ -14,7 +14,7 @@ class Neptune():
         self.image_height = h
         self.no_outputs = no_outputs
         self.batch_size = batch_size
-        #self.mod_function = Mods.mod_neptune_crop
+        self.mod_function = Mods.mod_neptune_crop
 
         """self.model = keras.Sequential([
             #keras.layers.Input(shape=(self.image_height, self.image_width, 1)),
@@ -68,7 +68,7 @@ class Neptune():
         speed = keras.layers.Dense(64, activation='relu')(speed_input)
 
         combined = keras.layers.concatenate([speed, original])
-        combined = keras.layers.Dense(self.no_outputs, activation='sigmoid')(combined)
+        combined = keras.layers.Dense(self.no_outputs, activation='sigmoid', name='keys')(combined)
 
         model = keras.Model(
             inputs=[image_input, speed_input],
@@ -78,17 +78,27 @@ class Neptune():
         return model
 
     
-    def fit(self, train_input, train_output, no_epochs, validation_data=None):
-        self.model.fit(train_input, train_output, epochs=no_epochs,
+    def fit(self, train_input, train_output, no_epochs): #, validation_data=None):
+        """self.model.fit(train_input, train_output, epochs=no_epochs,
             validation_data=validation_data,
             callbacks=[self.checkpoint_callback],
-            batch_size=self.batch_size)
+            batch_size=self.batch_size)"""
+        
+        self.model.fit(
+            {'image_input': train_input[0], 'speed_input': train_input[1]},
+            {'keys': train_output},
+            epochs=no_epochs,
+            batch_size=self.batch_size,
+            callbacks=[self.checkpoint_callback]
+        )
 
     def evaluate(self, test_input, test_output):
         self.model.evaluate(test_input, test_output, verbose=1)
 
     def predict(self, test_input):
-        return self.model.predict(test_input)
+        return self.model.predict(
+            np.array([test_input[0], test_input[1]])
+        )
 
     def summary(self):
         self.model.summary()
@@ -100,4 +110,4 @@ class Neptune():
             print('No checkpoint found')
 
 
-keras.utils.plot_model(Neptune().model, "multi_neptune.jpg", show_shapes=True)
+# keras.utils.plot_model(Neptune().model, "multi_neptune.jpg", show_shapes=True)

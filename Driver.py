@@ -17,10 +17,12 @@ import time
 import threading
 import sys
 
+import SpeedCapture
+
 # first parameter is the name of the engine class
 
-if len(sys.argv) != 2:
-    print('Missing engine class.')
+if len(sys.argv) < 4:
+    print('Not enough arguments.')
     exit()
 
 # get the engine class
@@ -31,6 +33,16 @@ engine_class = getattr(engine_module, model_name)
 
 model = engine_class()
 model.load()
+
+# trackmania PID, speed address and endian
+
+PID = int(sys.argv[2])
+address = int(sys.argv[3], 0)
+
+if len(sys.argv) == 4:
+    endian = 'little'
+else:
+    endian = sys.argv[4]
 
 # image dimensions
 image_width = model.image_width
@@ -66,7 +78,13 @@ while(not keyboard.is_pressed('q')):
 
         img = mod(img, image_width, image_height)
         #print(img.shape)
-        output = model.predict(np.array([img]))[0]
+
+        # speed
+        speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
+
+        x = (np.array([img]), np.array([speed]))
+
+        output = model.predict()[0]
         output = output > treshold
 
         up = output[3]
