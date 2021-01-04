@@ -3,6 +3,7 @@
 # f - finishes recording
 # x - same as f, but cancels (no shots will be saved)
 # q - quits recorder
+# python ScreenRecorder.py third_person PID address little
 
 from PIL import ImageGrab
 import numpy as np
@@ -10,11 +11,25 @@ import keyboard
 import pathlib
 import sys
 
-args = str(sys.argv)
-if len(sys.argv) == 1:
-    driver_camera = 'third_person'
+import SpeedCapture
+
+if len(sys.argv) < 4:
+    print('Not enough arguments.')
+    exit()
+
+driver_camera = sys.argv[1]
+
+# trackmania PID, speed address and endian
+
+PID = int(sys.argv[2])
+address = int(sys.argv[3], 0)
+
+if len(sys.argv) == 4:
+    endian = 'little'
 else:
-    driver_camera = 'first_person'
+    endian = sys.argv[4]
+
+# old recorder
 
 logfile = './log.txt'
 
@@ -68,15 +83,20 @@ while(not keyboard.is_pressed('q')):
     while(True):
         x=x+1
 
+        frame = ImageGrab.grab()
+        
+        speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
+
         up = int(keyboard.is_pressed('up'))
         down = int(keyboard.is_pressed('down'))
         left = int(keyboard.is_pressed('left'))
         right = int(keyboard.is_pressed('right'))
 
-        image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + str(log) + '_' + str(x) + '.jpg'
+        image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + \
+            str(log) + '_' + str(x) + '_' + str(speed) + '.jpg'
+        
         temp_stint.append(image)
         
-        frame = ImageGrab.grab()
         frame.save(image)
         print(image)
 
