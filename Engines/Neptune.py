@@ -97,7 +97,7 @@ class Neptune():
 
     def predict(self, test_input):
         return self.model.predict(
-            np.array([test_input[0], test_input[1]])
+            [test_input[0], test_input[1]]
         )
 
     def summary(self):

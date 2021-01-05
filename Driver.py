@@ -48,7 +48,7 @@ else:
 image_width = model.image_width
 image_height = model.image_height
 
-treshold = 0.97
+treshold = 0.99999995
 
 # mod = (desired image mod function)
 mod = model.mod_function
@@ -84,7 +84,7 @@ while(not keyboard.is_pressed('q')):
 
         x = (np.array([img]), np.array([speed]))
 
-        output = model.predict()[0]
+        output = model.predict(x)[0]
         output = output > treshold
 
         up = output[3]
