@@ -2,6 +2,7 @@
 
 from PIL import Image
 import numpy as np
+import time
 
 
 def mod_neptune_crop(img, w, h):
@@ -12,7 +13,16 @@ def mod_neptune_crop(img, w, h):
     return img
 
 
-"""img = Image.open('./images/third_person/0101/5_172.jpg')
+"""img = Image.open('./images/third_person/0101/6_54_112.jpg')
+start = time.time()
 img = img.crop((100, 350, img.size[0]-100, img.size[1]-100)).convert('L')
-img = img.resize((20, 20), Image.ANTIALIAS)
-img.show()"""
+
+img = np.array(img)
+
+img = (img > 180) * img
+
+img = Image.fromarray(img)
+img = img.resize((50, 50), Image.ANTIALIAS)
+img.show()
+end = time.time()
+print(end-start)"""
