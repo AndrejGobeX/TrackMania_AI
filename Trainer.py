@@ -33,12 +33,17 @@ no_epochs = 2
 if len(sys.argv) == 3:
     no_epochs = int(sys.argv[2])
 
+# third parameter is the camera, if missing defaults to third_person
+# only third_person and first_person are available
+camera = 'third_person'
+if len(sys.argv) == 4:
+    camera = sys.argv[3]
 
 # misc
 train = True
 load = True
 
-x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function)
+x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function, camera=camera)
 
 size = len(x)
 train_percentage = size*9//10
