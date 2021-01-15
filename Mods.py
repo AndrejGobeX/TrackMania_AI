@@ -16,23 +16,42 @@ def mod_neptune_crop(img, w, h):
 
 def mod_maniack_crop(img, w, h):
     img = initial_crop(img, 100, 350, 100, 100).convert('L')
+    img = img.resize((w, h), Image.ANTIALIAS)
+    img = np.array(img).reshape((h, w, 1))
+    img = (img < 80) * 255.0
+    return img
 
 
-img = Image.open('./images/third_person/0101/6_54_112.jpg')
-start = time.time()
-mod_neptune_crop(img, 50, 50)
-end = time.time()
-print(end-start)
+"""img = Image.open('./images/third_person/0101/6_306_191.jpg')
 
 start = time.time()
 img = img.crop((100, 350, img.size[0]-100, img.size[1]-100)).convert('L')
 
 img = np.array(img)
 
-img = (img > 180) * img
+img = (img < 70)
 
 img = Image.fromarray(img)
 img = img.resize((50, 50), Image.ANTIALIAS)
+img.show()
 img = np.array(img).reshape(50, 50, 1)
 end = time.time()
 print(end-start)
+img = Image.open('./images/third_person/0101/6_306_191.jpg')
+start = time.time()
+img = img.crop((100, 350, img.size[0]-100, img.size[1]-100)).convert('L')
+img = img.resize((50, 50), Image.ANTIALIAS)
+
+img = np.array(img)
+
+img = (img < 80) * 255.0
+
+img = Image.fromarray(img)
+img.show()
+img = np.array(img).reshape(50, 50, 1)
+end = time.time()
+print(end-start)
+img = Image.open('./images/third_person/0101/6_306_191.jpg')
+img = mod_maniack_crop(img, 50, 50)
+img = Image.fromarray(img.reshape(50, 50))
+img.show()"""
