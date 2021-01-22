@@ -39,7 +39,7 @@ model.load()
 PID = int(sys.argv[2])
 address = int(sys.argv[3], 0)
 
-if len(sys.argv) == 4:
+if len(sys.argv) >= 4:
     endian = 'little'
 else:
     endian = sys.argv[4]
