@@ -35,7 +35,7 @@ def mod_road_mask_crop(img, w, h):
 def mask_wrapper(img, black, mask):
     return Image.composite(img, black, mask)
 
-black = Image.open('./images/mask3.png').convert('L').resize((160, 90), Image.ANTIALIAS)
+"""black = Image.open('./images/mask3.png').convert('L').resize((160, 90), Image.ANTIALIAS)
 mask = initial_crop(ImageOps.invert(Image.open('./images/mask.png').convert('L')), 0, 200, 0, 0).resize((160, 90), Image.ANTIALIAS)
 
 letter = 't'
@@ -52,4 +52,4 @@ for name in os.listdir('./images/first_person/0000/'):
         end = time.time()
         print(end - start)
         img = Image.fromarray(img).convert('L')
-        img.save('./images/first_person/0000/'+letter+name)
+        img.save('./images/first_person/0000/'+letter+name)"""
