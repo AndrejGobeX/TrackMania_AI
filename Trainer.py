@@ -43,11 +43,7 @@ if len(sys.argv) == 4:
 train = True
 load = True
 
-lines = None
-if model.mode == 'lines':
-    lines = model.no_lines
-
-x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function, camera=camera, lines=lines)
+x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function, camera=camera)
 
 size = len(x)
 train_percentage = size*9//10
