@@ -59,6 +59,8 @@ class Maniack():
 
         original = keras.layers.Dense(128, activation='relu')(distance_input)
         original = keras.layers.Dropout(0.4)(original)
+        original = keras.layers.Dense(256, activation='relu')(original)
+        original = keras.layers.Dropout(0.4)(original)
 
         speed = keras.layers.Dense(64, activation='relu')(speed_input)
 
