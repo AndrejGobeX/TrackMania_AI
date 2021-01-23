@@ -6,15 +6,17 @@ import Mods
 
 class Maniack():
 
-    def __init__(self, w=50, h=50, no_outputs=4, batch_size=None):
+    def __init__(self, w=50, h=50, l=10, no_outputs=4, batch_size=None):
         
         self.name = 'maniack'
         self.checkpoint_path = checkpoint_path='./Checkpoints/' + self.name + '/ch.chpt'
         self.image_width = w
         self.image_height = h
+        self.no_lines = l
         self.no_outputs = no_outputs
         self.batch_size = batch_size
-        self.mod_function = Mods.mod_road_mask_crop
+        self.mod_function = Mods.mod_shrink_n_measure
+        self.mode = 'lines'
 
         """self.model = keras.Sequential([
             #keras.layers.Input(shape=(self.image_height, self.image_width, 1)),
@@ -45,9 +47,9 @@ class Maniack():
 
     def assemble_model(self):
 
-        image_input = keras.Input(
-            shape=(self.image_height, self.image_width, 1),
-            name='image_input'
+        distance_input = keras.Input(
+            shape=(self.no_lines),
+            name='distance_input'
         )
 
         speed_input = keras.Input(
@@ -55,11 +57,7 @@ class Maniack():
             name='speed_input'
         )
 
-        original = keras.layers.Conv2D(32,kernel_size=5,activation='relu')(image_input)
-        original = keras.layers.MaxPool2D()(original)
-        original = keras.layers.Dropout(0.4)(original)
-        original = keras.layers.Flatten()(original)
-        original = keras.layers.Dense(128, activation='relu')(original)
+        original = keras.layers.Dense(128, activation='relu')(distance_input)
         original = keras.layers.Dropout(0.4)(original)
 
         speed = keras.layers.Dense(64, activation='relu')(speed_input)
@@ -68,7 +66,7 @@ class Maniack():
         combined = keras.layers.Dense(self.no_outputs, activation='sigmoid', name='keys')(combined)
 
         model = keras.Model(
-            inputs=[image_input, speed_input],
+            inputs=[distance_input, speed_input],
             outputs=[combined]
         )
 
@@ -82,7 +80,7 @@ class Maniack():
             batch_size=self.batch_size)"""
         
         self.model.fit(
-            {'image_input': train_input[0], 'speed_input': train_input[1]},
+            {'distance_input': train_input[0], 'speed_input': train_input[1]},
             {'keys': train_output},
             epochs=no_epochs,
             batch_size=self.batch_size,

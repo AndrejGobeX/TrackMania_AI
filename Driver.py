@@ -77,7 +77,6 @@ while(not keyboard.is_pressed('q')):
         img = ImageGrab.grab()
 
         img = mod(img, image_width, image_height)
-        #print(img.shape)
 
         # speed
         speed = SpeedCapture.GetSpeed(PID, address, endian=endian)

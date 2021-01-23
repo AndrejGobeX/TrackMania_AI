@@ -15,7 +15,7 @@ def parse_output(string):
     u = int(string[3]) * 1.0
     return np.array([r, l, d, u])
 
-def get_dataset(w, h, camera='third_person', mod=Mods.mod_neptune_crop):
+def get_dataset(w, h, camera='third_person', mod=Mods.mod_neptune_crop, lines=None):
     path = './images/' + camera + '/'
     x_set = []
     y_set = []
@@ -32,7 +32,10 @@ def get_dataset(w, h, camera='third_person', mod=Mods.mod_neptune_crop):
             # opens image
             temp_img = Image.open(img_path)
             # apply mod
-            temp_img = mod(temp_img, w, h) / 255.0
+            if lines is not None:
+                temp_img = mod(temp_img, w, h, no_lines=lines)
+            else:
+                temp_img = mod(temp_img, w, h) / 255.0
             # add to x_set
             x_set.append(temp_img)
             # add coding to y_set

@@ -15,6 +15,7 @@ class Neptune():
         self.no_outputs = no_outputs
         self.batch_size = batch_size
         self.mod_function = Mods.mod_road_mask_crop
+        self.mode = 'image'
 
         """self.model = keras.Sequential([
             #keras.layers.Input(shape=(self.image_height, self.image_width, 1)),
