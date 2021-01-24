@@ -1,7 +1,7 @@
 # TrackMania_AI
 Neural network driver for Trackmania
 ## Intro and goals
-Computer vision and self-driving cars are one of the most common problems in ML/AI nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
+Computer vision and self-driving cars are one of the most common topics in ML/AI nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
 I played Trackmania when I was young and figured that it could be a good environment for this project.\
 Goal here is to make a decent driver (read: safe driver). It is not (yet) a racing material, but in the future I might try to make something faster.\
 If you have any ideas, comments or improvements, let me know.
