@@ -2,15 +2,15 @@
 Neural network driver for Trackmania
 ## Intro and goals
 Computer vision and self-driving cars are one of the biggest problems nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
-I played Trackmania when I was young and figured that it could be a good environment for this project.
-Goal here is to just make a decent driver (read: safe driver). It is not (yet) a racing material, since it would involve track memory and other complex parameters.
+I played Trackmania when I was young and figured that it could be a good environment for this project.\
+Goal here is to make a decent driver (read: safe driver). It is not (yet) a racing material, but in the future I might try to make something faster.\
 If you have any ideas, comments or improvements, let me know.
 ## Details
-It is currently a supervised framework (meaning it learns from the dataset, not on it's own). I plan to do reinforcement/evolution/mutation net in the future (if anyone know the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).
-I've split the dataset into two categories: third_person and first_person, based on the camera.
-The main problem is the processing time while driving. It takes approx. 0.3s from one shot to another on my machine which is very bad. At full throttle, it is impossible not to hit a wall.
+It is currently a supervised framework (meaning it learns from the dataset, not on it's own). I plan to do reinforcement/evolution/mutation net in the future (if anyone know the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).\
+I've split the dataset into two categories: third_person and first_person, based on the camera.\
+The main problem is the processing time while driving. It takes approx. 0.3s from one shot to another on my machine which is very bad. At full throttle, it is impossible not to hit a wall.\
 I tried to add speed limit which does make a small improvement, but it's a hack, so i'm trying to avoid it.
-Speed capturing is done with [CheatEngine](https://www.cheatengine.org/) and ctypes in Python. It's a little tricky to set it all up because speed variable shifts it's location on restart.
+Speed capturing is done with [CheatEngine](https://www.cheatengine.org/) and ctypes in Python. It's a little tricky to set it all up because speed variable shifts it's location on restart.\
 Networks are located in Engines/ directory.
 ## Contents
 | Filename | Brief description |
