@@ -6,7 +6,7 @@ I played Trackmania when I was young and figured that it could be a good environ
 Goal here is to make a decent driver (read: safe driver). It is not (yet) a racing material, but in the future I might try to make something faster.\
 If you have any ideas, comments or improvements, let me know.
 ## Details
-It is currently a supervised framework (meaning it learns from the dataset, not on it's own). I plan to do reinforcement/evolution/mutation net in the future (if anyone know the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).\
+It is currently a supervised framework (meaning it learns from the dataset, not on it's own). I plan to do reinforcement/evolution/mutation net in the future (if anyone knows the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).\
 I've split the dataset into two categories: third_person and first_person, based on the camera.\
 The main problem is the processing time while driving. It takes approx. 0.3s from one shot to another on my machine which is very bad. At full throttle, it is impossible not to hit a wall.\
 I tried to add speed limit which does make a small improvement, but it's a hack, so i'm trying to avoid it.
