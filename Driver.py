@@ -48,7 +48,7 @@ else:
 image_width = model.image_width
 image_height = model.image_height
 
-treshold = 0.99999995
+treshold = 0.9
 
 # mod = (desired image mod function)
 mod = model.mod_function

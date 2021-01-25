@@ -93,9 +93,9 @@ class Maniack():
         self.model.evaluate(test_input, test_output, verbose=1)
 
     def predict(self, test_input):
-        return self.model.predict(
+        return np.array(self.model(
             [test_input[0], test_input[1]]
-        )
+        ))
 
     def summary(self):
         self.model.summary()
