@@ -18,21 +18,6 @@ class Maniack():
         self.mod_function = Mods.mod_shrink_n_measure
         self.mode = 'lines'
 
-        """self.model = keras.Sequential([
-            #keras.layers.Input(shape=(self.image_height, self.image_width, 1)),
-            keras.layers.Conv2D(32,kernel_size=5,activation='relu',
-                input_shape=(self.image_height, self.image_width, 1)),
-            keras.layers.MaxPool2D(),
-            keras.layers.Dropout(0.4),
-            keras.layers.Conv2D(64,kernel_size=5,activation='relu'),
-            keras.layers.MaxPool2D(),
-            keras.layers.Dropout(0.4),
-            keras.layers.Flatten(),
-            keras.layers.Dense(128, activation='relu'),
-            keras.layers.Dropout(0.4),
-            keras.layers.Dense(self.no_outputs, activation='sigmoid')
-        ])"""
-
         self.model = self.assemble_model()
 
         self.model.compile(optimizer='adam',
@@ -75,18 +60,15 @@ class Maniack():
         return model
 
     
-    def fit(self, train_input, train_output, no_epochs): #, validation_data=None):
-        """self.model.fit(train_input, train_output, epochs=no_epochs,
-            validation_data=validation_data,
-            callbacks=[self.checkpoint_callback],
-            batch_size=self.batch_size)"""
+    def fit(self, train_input, train_output, no_epochs):
         
         self.model.fit(
             {'distance_input': train_input[0], 'speed_input': train_input[1]},
             {'keys': train_output},
             epochs=no_epochs,
             batch_size=self.batch_size,
-            callbacks=[self.checkpoint_callback]
+            callbacks=[self.checkpoint_callback],
+            validation_split=0.2
         )
 
     def evaluate(self, test_input, test_output):
@@ -100,11 +82,11 @@ class Maniack():
     def summary(self):
         self.model.summary()
 
+    def visualize(self):
+        keras.utils.plot_model(Neptune().model, "neptune.jpg", show_shapes=True)
+
     def load(self):
         try:
             self.model.load_weights(self.checkpoint_path)
         except:
             print('No checkpoint found')
-
-
-# keras.utils.plot_model(Maniack().model, "multi_maniack.jpg", show_shapes=True)

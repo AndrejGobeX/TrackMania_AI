@@ -61,16 +61,4 @@ if train:
     model.fit(x_train, y_train, no_epochs)
 
 model.summary()
-
-"""for i in range(len(x)):
-    print("image: "+str(i))
-
-    if(int(y[i][0])==0 and int(y[i][1])==0.0):
-        continue
-    prediction = model.predict(x[i:i+1])
-    
-    print(prediction)
-    print((prediction[0] > 0.1))
-    print(y[i])
-    print()
-"""
+model.visualize()

@@ -24,6 +24,18 @@ def mod_maniack_crop(img, w, h):
     return img
 """
 
+def mod_neos(img, model):
+    w = model.image_width
+    h = model.image_height
+    d = model.image_depth
+    img = initial_crop(img, 0, img.size[1]//2, 0, img.size[1]//3)
+    img = img.resize((w, h), Image.ANTIALIAS)
+    if d==1:
+        img = img.convert('L')
+    #img = img.filter(ImageFilter.FIND_EDGES)
+    img = np.array(img)
+    return img.reshape((h, w, d))
+
 def mod_road_mask_crop(img, model):
     w = model.image_width
     h = model.image_height
@@ -77,31 +89,3 @@ def run_inference(img_np, end_points):
             distance -= 1
     
     return img_np
-
-"""
-out_h = 50
-out_w = 50
-
-image_dir = '0100'
-letter = 't'
-s = 0
-i = 1000
-for name in os.listdir('./images/first_person/'+image_dir+'/'):
-    if i==0:
-        break
-    s-=1
-    if s>0:
-        continue
-    i-=1
-    if name[0] == '1' or name[0] == '1':
-        img = './images/first_person/'+image_dir+'/' + name
-        img = Image.open(img)
-        start = time.time()
-        end_points = mod_shrink_n_measure(img, out_w, out_h)
-        end = time.time()
-        print(end - start)
-        img = mod_road_mask_crop(img, out_w, out_w)
-        img = run_inference(img, end_points)
-        img = Image.fromarray(img)
-        img.save('./images/first_person/'+image_dir+'/'+letter+name)
-"""
