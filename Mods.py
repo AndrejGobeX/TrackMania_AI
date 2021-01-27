@@ -9,6 +9,7 @@ def initial_crop(img, l, u, r, d):
     img = img.crop((l, u, img.size[0]-r, img.size[1]-d))
     return img
 
+"""
 def mod_neptune_crop(img, w, h):
     img = initial_crop(img, 100, 350, 100, 100).convert('L')
     img = img.resize((w, h), Image.ANTIALIAS)
@@ -21,16 +22,20 @@ def mod_maniack_crop(img, w, h):
     img = np.array(img).reshape((h, w, 1))
     img = (img < 80) * 255.0
     return img
+"""
 
-def mod_road_mask_crop(img, w, h):
+def mod_road_mask_crop(img, model):
+    w = model.image_width
+    h = model.image_height
     img = initial_crop(img, 0, 470, 0, 300)
     img = img.resize((w, h), Image.ANTIALIAS).convert('L')
     img = ImageEnhance.Contrast(img).enhance(10)
     img = np.array(img)
     return img.reshape((h, w, 1))
 
-def mod_shrink_n_measure(img, w, h, no_lines=10, mod_fun=mod_road_mask_crop):
-    img_np = mod_fun(img, w, h)
+def mod_shrink_n_measure(img, model, mod_fun=mod_road_mask_crop):
+    no_lines = model.no_lines
+    img_np = mod_fun(img, model)
     return find_walls(img_np, no_lines=no_lines)
 
 def find_walls(img_np, no_lines=10, treshold=50):

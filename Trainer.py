@@ -43,7 +43,7 @@ if len(sys.argv) == 4:
 train = True
 load = True
 
-x, y = Dataset.get_dataset(image_width, image_height, mod=model.mod_function, camera=camera)
+x, y = Dataset.get_dataset(model, camera=camera)
 
 size = len(x)
 train_percentage = size*9//10
