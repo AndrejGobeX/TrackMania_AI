@@ -5,4 +5,5 @@
 *.7z
 *.mp4
 images/no/*.jpg
+images/*.jpg
 Test.py

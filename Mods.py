@@ -49,9 +49,10 @@ def mod_edge(img, model):
     w = model.image_width
     h = model.image_height
     img = initial_crop(img, 0, img.size[1]//2, 0, img.size[1]//3)
-    img = ImageEnhance.Contrast(img).enhance(10).convert('L')#.filter(ImageFilter.EDGE_ENHANCE_MORE)
+    img = ImageEnhance.Contrast(img).enhance(2).convert('L')#.filter(ImageFilter.EDGE_ENHANCE_MORE)
     img = img.resize((w, h), Image.ANTIALIAS)
     img = np.array(img)
+    img = (img < 50) * np.uint8(255)
     return img.reshape((h, w, 1))
 
 def mod_shrink_n_measure(img, model, mod_fun=mod_road_mask_crop):

@@ -58,5 +58,3 @@ def get_dataset(model, camera='third_person'):
 
     dataset = (x_set, y_set)
     return dataset
-
-# get_dataset(1400, 750)
