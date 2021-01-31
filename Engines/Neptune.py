@@ -15,7 +15,7 @@ class Neptune():
         self.image_depth = d
         self.no_outputs = no_outputs
         self.batch_size = batch_size
-        self.mod_function = Mods.mod_neos
+        self.mod_function = Mods.mod_edge
         self.mode = 'image'
 
         self.model = self.assemble_model()
