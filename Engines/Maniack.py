@@ -83,7 +83,7 @@ class Maniack():
         self.model.summary()
 
     def visualize(self):
-        keras.utils.plot_model(Neptune().model, "neptune.jpg", show_shapes=True)
+        keras.utils.plot_model(self.model, self.name+".jpg", show_shapes=True)
 
     def load(self):
         try:
