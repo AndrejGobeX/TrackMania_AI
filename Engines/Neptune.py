@@ -6,7 +6,7 @@ import Mods
 
 class Neptune():
 
-    def __init__(self, w=50, h=50, d=3, no_outputs=4, batch_size=None):
+    def __init__(self, w=50, h=50, d=1, no_outputs=4, batch_size=None):
         
         self.name = 'neptune'
         self.checkpoint_path = checkpoint_path='./Checkpoints/' + self.name + '/ch.chpt'
