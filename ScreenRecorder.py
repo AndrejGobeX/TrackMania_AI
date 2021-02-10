@@ -3,7 +3,8 @@
 # f - finishes recording
 # x - same as f, but cancels (no shots will be saved)
 # q - quits recorder
-# python ScreenRecorder.py third_person PID address little
+#
+# python ScreenRecorder.py first_person PID address little
 
 from PIL import ImageGrab
 import numpy as np
@@ -52,7 +53,7 @@ print(frame_height)
 
 size = (frame_width, frame_height) 
 
-x=0
+x = 0
 
 image_dir = './images/' + driver_camera + '/'
 
@@ -75,13 +76,13 @@ pathlib.Path(image_dir + '1111').mkdir(parents=True, exist_ok=True)
 
 clear_list = []
 
-while(not keyboard.is_pressed('q')):
+while not keyboard.is_pressed('q'):
     if not keyboard.is_pressed('s'):
         continue
 
     temp_stint = []
-    while(True):
-        x=x+1
+    while True:
+        x = x+1
 
         frame = ImageGrab.grab()
         
@@ -100,11 +101,11 @@ while(not keyboard.is_pressed('q')):
         frame.save(image)
         print(image)
 
-        if(keyboard.is_pressed('x')):
+        if keyboard.is_pressed('x'):
             clear_list.append(temp_stint)
             break
 
-        if(keyboard.is_pressed('f')):
+        if keyboard.is_pressed('f'):
             break
 
 for stint in clear_list:

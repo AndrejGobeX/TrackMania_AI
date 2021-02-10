@@ -1,14 +1,12 @@
 # Training script
 # python Trainer.py engine_name [no_epochs]
-# python Trainer.py Neptune 20
+# python Trainer.py Neptune 7000 first_person
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-
-import Mods, Dataset
-from PIL import Image
-import numpy as np
+import Dataset
 import sys
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # first parameter is the name of the engine class
 
@@ -49,11 +47,11 @@ size = len(x)
 train_percentage = size*9//10
 test_percentage = size - train_percentage
 
-x_train = x #x[:train_percentage]
-y_train = y #y[:train_percentage]
+x_train = x  # x[:train_percentage]
+y_train = y  # y[:train_percentage]
 
-#x_test = x[train_percentage:len(x)]
-#y_test = y[train_percentage:len(y)]
+# x_test = x[train_percentage:len(x)]
+# y_test = y[train_percentage:len(y)]
 
 if load:
     model.load()

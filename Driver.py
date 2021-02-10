@@ -2,22 +2,19 @@
 # s - begins drive
 # f - finishes drive
 # q - quits
-# python Driver.py Neputne
+#
+# python Driver.py Neptune 7070 0xABCDEFG
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-
-from Engines.Neptune import Neptune
-import Mods
 from PIL import ImageGrab
 import keyboard
-import DirectKey
 import numpy as np
 import time
-import threading
 import sys
-
 import SpeedCapture
+import DirectKey
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # first parameter is the name of the engine class
 
@@ -37,7 +34,10 @@ model.load()
 # trackmania PID, speed address and endian
 
 PID = int(sys.argv[2])
-address = int(sys.argv[3], 0)
+address = sys.argv[3]
+if address[:2] != '0x':
+    address = '0x' + address
+address = int(address, 0)
 
 if len(sys.argv) >= 4:
     endian = 'little'
@@ -48,7 +48,7 @@ else:
 image_width = model.image_width
 image_height = model.image_height
 
-treshold = 0.7
+threshold = 0.7
 
 # mod = (desired image mod function)
 mod = model.mod_function
@@ -65,13 +65,14 @@ KEY_RIGHT = 0xCD
 
 print("Ready")
 
-while(not keyboard.is_pressed('q')):
+while not keyboard.is_pressed('q'):
     if not keyboard.is_pressed('s'):
         continue
 
-    while(True):
+    while True:
 
-        #start = time.time()
+        # uncomment for reaction time measurement
+        # start = time.time()
 
         # screenshot
         img = ImageGrab.grab()
@@ -89,7 +90,7 @@ while(not keyboard.is_pressed('q')):
         x = (np.array([img]), np.array([speed]))
 
         output = model.predict(x)[0]
-        output = output > treshold
+        output = output > threshold
 
         up = output[3]
         down = output[2]
@@ -116,8 +117,8 @@ while(not keyboard.is_pressed('q')):
         else:
             DirectKey.ReleaseKey(KEY_RIGHT)
 
-        #stop = time.time()
-        #print(stop - start) # reaction time
+        # stop = time.time()
+        # print(stop - start) # reaction time
 
         if keyboard.is_pressed('f'):
             DirectKey.ReleaseKey(KEY_UP)

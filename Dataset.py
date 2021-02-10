@@ -1,12 +1,11 @@
 # Dataset wrapper
 
 import os
-import pathlib
 from PIL import Image
-import Mods
 import numpy as np
 
 # rldu
+
 
 def parse_output(string):
     r = int(string[0]) * 1.0
@@ -14,6 +13,7 @@ def parse_output(string):
     d = int(string[2]) * 1.0
     u = int(string[3]) * 1.0
     return np.array([r, l, d, u])
+
 
 def get_dataset(model, camera='third_person'):
     mod = model.mod_function
