@@ -71,12 +71,17 @@ while(not keyboard.is_pressed('q')):
 
     while(True):
 
-        start = time.time()
+        #start = time.time()
 
         # screenshot
         img = ImageGrab.grab()
 
         img = mod(img, model)
+
+        try:
+            img = img / 255.0
+        except:
+            img = img
 
         # speed
         speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
@@ -111,8 +116,8 @@ while(not keyboard.is_pressed('q')):
         else:
             DirectKey.ReleaseKey(KEY_RIGHT)
 
-        stop = time.time()
-        print(stop - start) # reaction time
+        #stop = time.time()
+        #print(stop - start) # reaction time
 
         if keyboard.is_pressed('f'):
             DirectKey.ReleaseKey(KEY_UP)
