@@ -10,6 +10,12 @@ It is currently a supervised framework (meaning it learns from the dataset, not 
 I've split the dataset into two categories: third_person and first_person, based on the camera.\
 Speed capturing is done with [CheatEngine](https://www.cheatengine.org/) and ctypes in Python. It's a little tricky to set it all up because speed variable shifts it's location on restart.\
 Networks are located in Engines/ directory.
+## Current networks
+For now, I've made two networks which use different approaches. Each of them outputs a 4-number array which represents probabilities of certain arrow keys being pressed (0.0 - 1.0). Threshold for each of the arrows can be tweaked independetly. In the future, it will be tied to the model.\ \
+Neptune is a convolutional network containing two conv2d layers. It just takes a 50x50 modded image and pops out four probabilities.\
+![Neptune mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/neptune_mod.png?raw=true)\
+Maniack, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
+![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/Maniack_mod.png?raw=true)
 ## Contents
 | Filename | Brief description |
 | -------- | ----------------- |
