@@ -15,7 +15,7 @@ For now, I've made two networks which use different approaches. Each of them out
 Neptune is a convolutional network containing two conv2d layers. It just takes a 50x50 modded image and pops out four probabilities.\
 ![Neptune mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/neptune_mod.png?raw=true)\
 Maniack, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
-![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/Maniack_mod.png?raw=true)
+![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)
 ## Contents
 | Filename | Brief description |
 | -------- | ----------------- |
