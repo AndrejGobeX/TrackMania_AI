@@ -39,7 +39,7 @@ if address[:2] != '0x':
     address = '0x' + address
 address = int(address, 0)
 
-if len(sys.argv) >= 4:
+if len(sys.argv) == 4:
     endian = 'little'
 else:
     endian = sys.argv[4]
