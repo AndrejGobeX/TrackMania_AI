@@ -11,3 +11,4 @@ images/*.jpg
 Test.py
 .idea/*
 NEAT/visualize.py
+*.gv

@@ -1,4 +1,8 @@
 # Training script for NEAT
+#
+# Switch to Trackmania and press s to begin
+# The script will simulate all runs automatically for the number of generations
+#
 # python NEAT_Trainer PID address [endian]
 
 from __future__ import print_function
@@ -43,11 +47,12 @@ else:
 image_width = 100
 image_height = 100
 
+# hyperparams
 threshold = 0.5
-
-no_generations = 10
-
+no_generations = 20
 max_fitness = 100.0
+no_seconds = 30
+kill_seconds = 3
 
 up = False
 down = False
@@ -58,7 +63,7 @@ KEY_UP = 0xC8
 KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
 KEY_RIGHT = 0xCD
-
+KEY_DELETE = 0xD3
 
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
@@ -133,71 +138,79 @@ def eval_genomes(genomes, config):
         # Driving
         print("Ready. Genome id: " + str(genome_id))
 
-        while not keyboard.is_pressed('q'):
+        '''while not keyboard.is_pressed('q'):
             if not keyboard.is_pressed('s'):
-                continue
+                continue'''
 
-            while True:
+        begin = time.time()
+        y = []
+        x = []
+        DirectKey.PressKey(KEY_DELETE)
+        DirectKey.ReleaseKey(KEY_DELETE)
 
-                # uncomment for reaction time measurement
-                # start = time.time()
+        while True:
 
-                # screenshot
-                img = ImageGrab.grab()
+            # uncomment for reaction time measurement
+            # start = time.time()
 
-                img = mod_shrink_n_measure(img, image_width, image_height, 20)
+            # screenshot
+            img = ImageGrab.grab()
 
-                try:
-                    img = img / 255.0
-                except:
-                    img = img
+            img = mod_shrink_n_measure(img, image_width, image_height, 20)
 
-                # speed
-                speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
+            try:
+                img = img / 255.0
+            except:
+                img = img
 
-                img.append(speed)
+            # speed
+            speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
 
-                # net
-                output = np.array(net.activate(img)) > threshold
+            img.append(speed)
+            y.append(speed)
+            x.append(time.time()-begin)
 
-                up = output[3]
-                down = output[2]
-                left = output[1]
-                right = output[0]
+            # net
+            output = np.array(net.activate(img)) > threshold
 
-                if up:
-                    DirectKey.PressKey(KEY_UP)
-                else:
-                    DirectKey.ReleaseKey(KEY_UP)
+            up = output[3]
+            down = output[2]
+            left = output[1]
+            right = output[0]
 
-                if down:
-                    DirectKey.PressKey(KEY_DOWN)
-                else:
-                    DirectKey.ReleaseKey(KEY_DOWN)
+            if up:
+                DirectKey.PressKey(KEY_UP)
+            else:
+                DirectKey.ReleaseKey(KEY_UP)
 
-                if left:
-                    DirectKey.PressKey(KEY_LEFT)
-                else:
-                    DirectKey.ReleaseKey(KEY_LEFT)
+            if down:
+                DirectKey.PressKey(KEY_DOWN)
+            else:
+                DirectKey.ReleaseKey(KEY_DOWN)
 
-                if right:
-                    DirectKey.PressKey(KEY_RIGHT)
-                else:
-                    DirectKey.ReleaseKey(KEY_RIGHT)
+            if left:
+                DirectKey.PressKey(KEY_LEFT)
+            else:
+                DirectKey.ReleaseKey(KEY_LEFT)
 
-                # stop = time.time()
-                # print(stop - start) # reaction time
+            if right:
+                DirectKey.PressKey(KEY_RIGHT)
+            else:
+                DirectKey.ReleaseKey(KEY_RIGHT)
 
-                if keyboard.is_pressed('f'):
-                    DirectKey.ReleaseKey(KEY_UP)
-                    DirectKey.ReleaseKey(KEY_DOWN)
-                    DirectKey.ReleaseKey(KEY_LEFT)
-                    DirectKey.ReleaseKey(KEY_RIGHT)
-                    break
+            # stop = time.time()
+            # print(stop - start) # reaction time
+            finish = time.time()-begin
+            if finish > no_seconds or (finish > kill_seconds and speed < 52):#keyboard.is_pressed('f'):
+                DirectKey.ReleaseKey(KEY_UP)
+                DirectKey.ReleaseKey(KEY_DOWN)
+                DirectKey.ReleaseKey(KEY_LEFT)
+                DirectKey.ReleaseKey(KEY_RIGHT)
+                break
         
-        print('Time:')
-        t = float(input())
-        genome.fitness = max_fitness - t
+        #print('Time:')
+        #t = float(input())
+        genome.fitness = np.trapz(y, x)#max_fitness - t
 
 
 
@@ -237,11 +250,8 @@ def run(config_file, checkpoint=None):
     # p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-9')
     # p.run(eval_genomes, 10)
 
-
-if __name__ == '__main__':
-    # Determine path to configuration file. This path manipulation is
-    # here so that the script will run successfully regardless of the
-    # current working directory.
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config-feedforward')
-    run(config_path)
+local_dir = os.path.dirname(__file__)
+config_path = os.path.join(local_dir, 'config-feedforward')
+print('Press s to begin.')
+keyboard.wait('s')
+run(config_path, 'neat-checkpoint-56')
