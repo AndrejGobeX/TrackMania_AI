@@ -16,7 +16,7 @@ def mod_perspective(img, model):
     pts2 = np.float32([[0,900],[1600,900],[0,0],[1600,0]])
 
     M = cv2.getPerspectiveTransform(pts1,pts2)
-    dst = cv2.warpPerspective(img,M,(1600,900))
+    dst = cv2.warpPerspective(img,M,(1600,900), borderMode=cv2.BORDER_CONSTANT, borderValue=[255, 255, 255])
 
     dst = cv2.resize(dst, (model.image_width, model.image_height))
     dst = cv2.medianBlur(dst, 5)
