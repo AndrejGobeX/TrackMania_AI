@@ -15,6 +15,7 @@ import sys
 import time
 import numpy as np
 from PIL import ImageGrab, ImageEnhance, Image
+import cv2
 # In order to visualize the training net, you need to copy visualize.py file into the NEAT directory (you can find it in the NEAT repo)
 # Because of the licence, I am not going to copy it to my github repository
 # You can still train your network without it
@@ -51,8 +52,10 @@ image_height = 100
 threshold = 0.5
 no_generations = 20
 max_fitness = 100.0
-no_seconds = 30
-kill_seconds = 3
+no_seconds = 10
+kill_seconds = 10
+kill_speed = 51
+no_lines = 5
 
 up = False
 down = False
@@ -79,6 +82,7 @@ def mod_edge(img, w, h):
     img = ImageEnhance.Contrast(img).enhance(2).convert('L')  # .filter(ImageFilter.EDGE_ENHANCE_MORE)
     img = img.resize((w, h), Image.ANTIALIAS)
     img = np.array(img)
+    img = cv2.medianBlur(img, 5)
     img = (img < 50) * np.uint8(255)
     return img.reshape((h, w, 1))
 
@@ -156,7 +160,7 @@ def eval_genomes(genomes, config):
             # screenshot
             img = ImageGrab.grab()
 
-            img = mod_shrink_n_measure(img, image_width, image_height, 20)
+            img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
 
             try:
                 img = img / 255.0
@@ -171,10 +175,11 @@ def eval_genomes(genomes, config):
             x.append(time.time()-begin)
 
             # net
-            output = np.array(net.activate(img)) > threshold
+            output = np.array(net.activate(img))
+            output = output > threshold
 
-            up = output[3]
-            down = output[2]
+            up = output[2]
+            #down = output[2]
             left = output[1]
             right = output[0]
 
@@ -201,7 +206,7 @@ def eval_genomes(genomes, config):
             # stop = time.time()
             # print(stop - start) # reaction time
             finish = time.time()-begin
-            if finish > no_seconds or (finish > kill_seconds and speed < 52):#keyboard.is_pressed('f'):
+            if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
                 DirectKey.ReleaseKey(KEY_UP)
                 DirectKey.ReleaseKey(KEY_DOWN)
                 DirectKey.ReleaseKey(KEY_LEFT)
@@ -242,7 +247,7 @@ def run(config_file, checkpoint=None):
     print('\nOutput:')
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
 
-    node_names = {0:'r', 1:'l', 2:'d', 3:'u'}
+    node_names = {0:'r', 1:'l', 2:'u'}
     visualize.draw_net(config, winner, True, node_names=node_names)
     visualize.plot_stats(stats, ylog=False, view=True)
     visualize.plot_species(stats, view=True)
@@ -254,4 +259,9 @@ local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, 'config-feedforward')
 print('Press s to begin.')
 keyboard.wait('s')
-run(config_path, 'neat-checkpoint-56')
+
+for cpt in os.listdir('.'):
+    if cpt[:4] == 'neat':
+        os.unlink('./'+cpt)
+
+run(config_path)#, 'neat-checkpoint-56')
