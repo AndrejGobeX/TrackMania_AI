@@ -21,7 +21,7 @@ def mod_perspective(img, model):
     dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
     dst = (dst < 50) * np.uint8(255)
 
-    return dst
+    return dst.reshape((model.image_height, model.image_width, 1))
 
 
 def mod_neos(img, model):
