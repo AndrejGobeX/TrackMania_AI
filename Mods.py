@@ -9,6 +9,21 @@ def initial_crop(img, l, u, r, d):
     return img
 
 
+def mod_perspective(img, model):
+    pts1 = np.float32([[0-(9*360),540+360],[1600+(9*360),540+360],[540,480],[1060,480]])
+    pts2 = np.float32([[0,900],[1600,900],[0,0],[1600,0]])
+
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    dst = cv2.warpPerspective(img,M,(1600,900))
+
+    dst = cv2.resize(dst, (model.image_width, model.image_height))
+    dst = cv2.medianBlur(dst, 5)
+    dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
+    dst = (dst < 50) * np.uint8(255)
+
+    return dst
+
+
 def mod_neos(img, model):
     w = model.image_width
     h = model.image_height
