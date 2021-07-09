@@ -20,7 +20,7 @@ class Falcon():
 
         self.model = self.assemble_model()
 
-        self.model.compile(optimizer='adam',
+        self.model.compile(optimizer=keras.optimizers.SGD(lr=0.01),
             loss=keras.losses.MeanSquaredError(),
             metrics=['accuracy'])
 
