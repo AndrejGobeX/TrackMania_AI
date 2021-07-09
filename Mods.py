@@ -11,6 +11,7 @@ def initial_crop(img, l, u, r, d):
 
 
 def mod_perspective(img, model):
+    img = np.array(img)
     pts1 = np.float32([[0-(9*360),540+360],[1600+(9*360),540+360],[540,480],[1060,480]])
     pts2 = np.float32([[0,900],[1600,900],[0,0],[1600,0]])
 
