@@ -6,7 +6,7 @@ import Mods
 
 class Falcon():
 
-    def __init__(self, w=200, h=100, d=1, no_outputs=4, batch_size=None):
+    def __init__(self, w=200, h=100, d=1, no_outputs=4, batch_size=8):
         
         self.name = 'falcon'
         self.checkpoint_path = checkpoint_path='./Checkpoints/' + self.name + '/ch.chpt'
@@ -42,10 +42,10 @@ class Falcon():
             name='speed_input'
         )
 
-        original = keras.layers.Conv2D(32,kernel_size=5,activation='relu')(image_input)
+        """ original = keras.layers.Conv2D(32,kernel_size=5,activation='relu')(image_input)
         original = keras.layers.MaxPool2D()(original)
-        original = keras.layers.Dropout(0.4)(original)
-        original = keras.layers.Conv2D(64,kernel_size=5,activation='relu')(original)
+        original = keras.layers.Dropout(0.4)(original) """
+        original = keras.layers.Conv2D(64,kernel_size=5,activation='relu')(image_input)
         original = keras.layers.MaxPool2D()(original)
         original = keras.layers.Dropout(0.4)(original)
         original = keras.layers.Flatten()(original)
