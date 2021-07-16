@@ -52,10 +52,11 @@ image_height = 100
 threshold = 0.5
 no_generations = 20
 max_fitness = 100.0
-no_seconds = 10
-kill_seconds = 10
-kill_speed = 51
+no_seconds = 20
+kill_seconds = 5
+kill_speed = 51 / 300.0
 no_lines = 5
+checkpoint = 'neat-checkpoint-4'
 
 up = False
 down = False
@@ -168,7 +169,7 @@ def eval_genomes(genomes, config):
                 img = img
 
             # speed
-            speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
+            speed = SpeedCapture.GetSpeed(PID, address, endian=endian) / 300.0
 
             img.append(speed)
             y.append(speed)
@@ -260,8 +261,9 @@ config_path = os.path.join(local_dir, 'config-feedforward')
 print('Press s to begin.')
 keyboard.wait('s')
 
-for cpt in os.listdir('.'):
-    if cpt[:4] == 'neat':
-        os.unlink('./'+cpt)
+if checkpoint == None:
+    for cpt in os.listdir('.'):
+        if cpt[:4] == 'neat':
+            os.unlink('./'+cpt)
 
-run(config_path)#, 'neat-checkpoint-56')
+run(config_path, checkpoint)
