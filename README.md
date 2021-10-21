@@ -6,7 +6,7 @@ I played Trackmania when I was young and figured that it could be a good environ
 Goal here is to make a decent driver. It is not (yet) a racing material.\
 If you have any ideas, comments or improvements, let me know.
 ## Details
-It is currently a supervised framework (meaning it learns from the dataset, not on it's own). I plan to do reinforcement/evolution/mutation net in the future (if anyone knows the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).\
+This project uses both supervised and reinforcement approaches (RL branch is dedicated to the latter one). I plan to do reinforcement/evolution/mutation net in the future (if anyone knows the easiest way to link NEAT or Tensorflow's reinforcement API with Trackmania, let me know).\
 I've split the dataset into two categories: third_person and first_person, based on the camera.\
 Speed capturing is done with [CheatEngine](https://www.cheatengine.org/) and ctypes in Python. It's a little tricky to set it all up because speed variable shifts it's location on restart.\
 Networks are located in Engines/ directory.
