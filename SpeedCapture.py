@@ -11,8 +11,8 @@ PSIZE_T = ctypes.POINTER(SIZE_T)
 
 
 def _check_zero(result, func, args):
-    if not result:
-        raise ctypes.WinError(ctypes.get_last_error())
+    #if not result:
+    #    raise ctypes.WinError(ctypes.get_last_error())
     return args
 
 
