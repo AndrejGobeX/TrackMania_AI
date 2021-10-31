@@ -4,7 +4,11 @@
 *.json
 *.7z
 *.mp4
+*.pdf
+*.svg
 images/no/*.jpg
 images/*.jpg
 Test.py
 .idea/*
+NEAT/visualize.py
+*.gv
