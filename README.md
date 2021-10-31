@@ -32,7 +32,7 @@ I have tested this procedure and it should work on any computer. The main proble
 2. Download Openplanet and install it.
 3. Git clone this repository.
 3. Copy the `Plugin*` files from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Scripts`.
-4. Run Trackmania, press F3 to open Openplanet, go to Openplanet > Log and check if the script is running (should print Waiting for incomming connection). You can, if necessary, reload the plugin from Developer > Reload plugin. Open any map (nets are trained on basic circuits, so the best thing is to create a new one), and enter driving mode.
+4. Run Trackmania, press `F3` to open Openplanet, go to Openplanet > Log and check if the script is running (should print Waiting for incomming connection). You can, if necessary, reload the plugin from Developer > Reload plugin. Open any map (nets are trained on basic circuits, so the best thing is to create a new one), and enter driving mode. Press `F3` again to close the openplanet overlay (scripts capture full-screen and overlays will mess them up).
 5. Alt-tab or press Win key and open command prompt. Find Driver.py and enter `python Driver.py Neptune` (or Maniack).
 6. Wait until you see Press s to begin, alt-tab to Trackmania, unpause the game and press `S`.
 7. The car should go autonomously. To end a run, press `F`, to quit the script, press `Q`.
