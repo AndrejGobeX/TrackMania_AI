@@ -6,7 +6,7 @@ I played Trackmania when I was young and figured that it could be a good environ
 Goal here is to make a decent driver. It is not (yet) a racing material.\
 If you have any ideas, comments or improvements, let me know.
 ## Details
-This project uses both supervised and reinforcement approaches (RL branch is dedicated to the latter one).\
+This project uses both supervised and reinforcement approaches (~~RL branch is dedicated to the latter one~~).\
 I've split the dataset into two categories: third_person and first_person, based on the camera.\
 Speed capturing is now done with [Openplanet](https://openplanet.nl/) and sockets in Python.
 Networks are located in Engines/ directory.
