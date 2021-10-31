@@ -15,8 +15,7 @@ For now, I've made two supervised networks and one neuroevultion configuration. 
 Neptune is a convolutional network containing two conv2d layers. It just takes a 50x50 modded image and pops out four probabilities.\
 ![Neptune mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/neptune_mod.png?raw=true)\
 Maniack, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
-![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)\
-
+![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)
 ## Contents
 | Filename | Brief description |
 | -------- | ----------------- |
@@ -27,19 +26,19 @@ Maniack, on the other hand, uses a 10-number vector as input. It represents norm
 | ScreenRecorder.py | Background script to capture frames while you play |
 | SpeedCapture | Functions to get speed value from the game |
 | Trainer.py | Trains the neural network |
-\
 ## Setup
 I have tested this procedure and it should work on any computer. The main problems here are resolution and camera. You should edit the scripts with respect to your resolution and, while in Trackmania, switch to first person (currently, nets are trained with first person because it is a lot easier for AI to understand movement and to follow the track that way).
 1. Download Trackmania and Python with all the necessary packages.
 2. Download Openplanet and install it.
 3. Git clone this repository.
-3. Copy the contents of Scripts/ directory to `C:\Users\(username)\OpenplanetNext\Scripts`.
+3. Copy the `Plugin*` files from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Scripts`.
 4. Run Trackmania, press F3 to open Openplanet, go to Openplanet > Log and check if the script is running (should print Waiting for incomming connection). You can, if necessary, reload the plugin from Developer > Reload plugin. Open any map (nets are trained on basic circuits, so the best thing is to create a new one), and enter driving mode.
 5. Alt-tab or press Win key and open command prompt. Find Driver.py and enter `python Driver.py Neptune` (or Maniack).
 6. Wait until you see Press s to begin, alt-tab to Trackmania, unpause the game and press `S`.
 7. The car should go autonomously. To end a run, press `F`, to quit the script, press `Q`.
 ## Packages used and credits
-Big thanks to the community!
+I would like to thank Yann and Edouard (@trackmania-rl) for making the script for openplanet. I have included the licence and copyright notice with those files in the `Scripts\` directiory.
+Big thanks to the community!\
 The latest versions are used for all packages (31.10.2021.):
 * python-pillow/Pillow - image preprocessing
 * boppreh/keyboard - keyboard API
