@@ -3,19 +3,20 @@
 # Switch to Trackmania and press s to begin
 # The script will simulate all runs automatically for the number of generations
 #
-# python NEAT_Trainer PID address [endian]
+# python NEAT_Trainer
 
 from __future__ import print_function
 import os
 import neat
 import keyboard
-import SpeedCapture
 import DirectKey
 import sys
 import time
 import numpy as np
 from PIL import ImageGrab, ImageEnhance, Image
 import cv2
+import socket
+from struct import unpack
 # In order to visualize the training net, you need to copy visualize.py file into the NEAT directory (you can find it in the NEAT repo)
 # Because of the licence, I am not going to copy it to my github repository
 # You can still train your network without it
@@ -27,22 +28,9 @@ except ModuleNotFoundError:
 os.chdir('./NEAT')
 print(os.getcwd())
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 0:
     print('Not enough arguments.')
     exit()
-
-# trackmania PID, speed address and endian
-
-PID = int(sys.argv[1])
-address = sys.argv[2]
-if address[:2] != '0x':
-    address = '0x' + address
-address = int(address, 0)
-
-if len(sys.argv) < 4:
-    endian = 'little'
-else:
-    endian = sys.argv[4]
 
 # image dimensions
 image_width = 100
@@ -56,7 +44,7 @@ no_seconds = 20
 kill_seconds = 5
 kill_speed = 51 / 300.0
 no_lines = 5
-checkpoint = 'neat-checkpoint-4'
+checkpoint = None
 
 up = False
 down = False
@@ -136,87 +124,92 @@ def run_inference(img_np, end_points):
 
 
 def eval_genomes(genomes, config):
-    for genome_id, genome in genomes:
-        genome.fitness = 10.0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(("127.0.0.1", 9000))    
+        for genome_id, genome in genomes:
+            genome.fitness = 10.0
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            
+            # Driving
+            print("Ready. Genome id: " + str(genome_id))
+
+            '''while not keyboard.is_pressed('q'):
+                if not keyboard.is_pressed('s'):
+                    continue'''
+
+            begin = time.time()
+            y = []
+            x = []
+            DirectKey.PressKey(KEY_DELETE)
+            DirectKey.ReleaseKey(KEY_DELETE)
+
         
-        # Driving
-        print("Ready. Genome id: " + str(genome_id))
 
-        '''while not keyboard.is_pressed('q'):
-            if not keyboard.is_pressed('s'):
-                continue'''
+            while True:
 
-        begin = time.time()
-        y = []
-        x = []
-        DirectKey.PressKey(KEY_DELETE)
-        DirectKey.ReleaseKey(KEY_DELETE)
+                # uncomment for reaction time measurement
+                # start = time.time()
 
-        while True:
+                # screenshot
+                img = ImageGrab.grab()
 
-            # uncomment for reaction time measurement
-            # start = time.time()
+                img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
 
-            # screenshot
-            img = ImageGrab.grab()
+                try:
+                    img = img / 255.0
+                except:
+                    img = img
 
-            img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
+                # speed
+                speed = unpack(b'@f', s.recv(4))[0] * 3.6 / 300
+                s.recv(40)
 
-            try:
-                img = img / 255.0
-            except:
-                img = img
+                img.append(speed)
+                y.append(speed)
+                x.append(time.time()-begin)
 
-            # speed
-            speed = SpeedCapture.GetSpeed(PID, address, endian=endian) / 300.0
+                # net
+                output = np.array(net.activate(img))
+                output = output > threshold
 
-            img.append(speed)
-            y.append(speed)
-            x.append(time.time()-begin)
+                up = output[2]
+                #down = output[2]
+                left = output[1]
+                right = output[0]
 
-            # net
-            output = np.array(net.activate(img))
-            output = output > threshold
+                if up:
+                    DirectKey.PressKey(KEY_UP)
+                else:
+                    DirectKey.ReleaseKey(KEY_UP)
 
-            up = output[2]
-            #down = output[2]
-            left = output[1]
-            right = output[0]
+                if down:
+                    DirectKey.PressKey(KEY_DOWN)
+                else:
+                    DirectKey.ReleaseKey(KEY_DOWN)
 
-            if up:
-                DirectKey.PressKey(KEY_UP)
-            else:
-                DirectKey.ReleaseKey(KEY_UP)
+                if left:
+                    DirectKey.PressKey(KEY_LEFT)
+                else:
+                    DirectKey.ReleaseKey(KEY_LEFT)
 
-            if down:
-                DirectKey.PressKey(KEY_DOWN)
-            else:
-                DirectKey.ReleaseKey(KEY_DOWN)
+                if right:
+                    DirectKey.PressKey(KEY_RIGHT)
+                else:
+                    DirectKey.ReleaseKey(KEY_RIGHT)
 
-            if left:
-                DirectKey.PressKey(KEY_LEFT)
-            else:
-                DirectKey.ReleaseKey(KEY_LEFT)
-
-            if right:
-                DirectKey.PressKey(KEY_RIGHT)
-            else:
-                DirectKey.ReleaseKey(KEY_RIGHT)
-
-            # stop = time.time()
-            # print(stop - start) # reaction time
-            finish = time.time()-begin
-            if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
-                DirectKey.ReleaseKey(KEY_UP)
-                DirectKey.ReleaseKey(KEY_DOWN)
-                DirectKey.ReleaseKey(KEY_LEFT)
-                DirectKey.ReleaseKey(KEY_RIGHT)
-                break
-        
-        #print('Time:')
-        #t = float(input())
-        genome.fitness = np.trapz(y, x)#max_fitness - t
+                # stop = time.time()
+                # print(stop - start) # reaction time
+                finish = time.time()-begin
+                if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
+                    DirectKey.ReleaseKey(KEY_UP)
+                    DirectKey.ReleaseKey(KEY_DOWN)
+                    DirectKey.ReleaseKey(KEY_LEFT)
+                    DirectKey.ReleaseKey(KEY_RIGHT)
+                    break
+            
+            #print('Time:')
+            #t = float(input())
+            genome.fitness = np.trapz(y, x)#max_fitness - t
 
 
 
@@ -249,14 +242,17 @@ def run(config_file, checkpoint=None):
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
 
     node_names = {0:'r', 1:'l', 2:'u'}
-    visualize.draw_net(config, winner, True, node_names=node_names)
-    visualize.plot_stats(stats, ylog=False, view=True)
-    visualize.plot_species(stats, view=True)
+    try:
+        visualize.draw_net(config, winner, True, node_names=node_names)
+        visualize.plot_stats(stats, ylog=False, view=True)
+        visualize.plot_species(stats, view=True)
+    except:
+        print('Missing visualize.py file.')
 
     # p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-9')
     # p.run(eval_genomes, 10)
 
-local_dir = os.path.dirname(__file__)
+local_dir = os.getcwd()
 config_path = os.path.join(local_dir, 'config-feedforward')
 print('Press s to begin.')
 keyboard.wait('s')

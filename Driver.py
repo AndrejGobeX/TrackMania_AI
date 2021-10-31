@@ -3,7 +3,7 @@
 # f - finishes drive
 # q - quits
 #
-# python Driver.py Neptune 7070 0xABCDEFG
+# python Driver.py Neptune
 
 import os
 from PIL import ImageGrab
@@ -11,14 +11,15 @@ import keyboard
 import numpy as np
 import time
 import sys
-import SpeedCapture
 import DirectKey
+import socket
+from struct import unpack
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # first parameter is the name of the engine class
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 2:
     print('Not enough arguments.')
     exit()
 
@@ -30,19 +31,6 @@ engine_class = getattr(engine_module, model_name)
 
 model = engine_class()
 model.load()
-
-# trackmania PID, speed address and endian
-
-PID = int(sys.argv[2])
-address = sys.argv[3]
-if address[:2] != '0x':
-    address = '0x' + address
-address = int(address, 0)
-
-if len(sys.argv) == 4:
-    endian = 'little'
-else:
-    endian = sys.argv[4]
 
 # image dimensions
 image_width = model.image_width
@@ -69,60 +57,67 @@ while not keyboard.is_pressed('q'):
     if not keyboard.is_pressed('s'):
         continue
 
-    while True:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        
+        s.connect(("127.0.0.1", 9000))
+        
+        while True:
 
-        # uncomment for reaction time measurement
-        # start = time.time()
+            # uncomment for reaction time measurement
+            #start = time.time()
 
-        # screenshot
-        img = ImageGrab.grab()
+            # screenshot
+            img = ImageGrab.grab()
 
-        img = mod(img, model)
+            img = mod(img, model)
 
-        try:
-            img = img / 255.0
-        except:
-            img = img
+            try:
+                img = img / 255.0
+            except:
+                img = img
 
-        # speed
-        speed = SpeedCapture.GetSpeed(PID, address, endian=endian)
+            # speed
+            speed = unpack(b'@f', s.recv(4))[0] * 3.6
 
-        x = (np.array([img]), np.array([speed]))
+            s.recv(40)
 
-        output = model.predict(x)[0]
-        output = output > threshold
+            x = (np.array([img]), np.array([speed]))
 
-        up = output[3]
-        down = output[2]
-        left = output[1]
-        right = output[0]
+            output = model.predict(x)[0]
+            output = output > threshold
 
-        if up:
-            DirectKey.PressKey(KEY_UP)
-        else:
-            DirectKey.ReleaseKey(KEY_UP)
+            up = output[3]
+            down = output[2]
+            left = output[1]
+            right = output[0]
 
-        if down:
-            DirectKey.PressKey(KEY_DOWN)
-        else:
-            DirectKey.ReleaseKey(KEY_DOWN)
+            if up:
+                DirectKey.PressKey(KEY_UP)
+            else:
+                DirectKey.ReleaseKey(KEY_UP)
 
-        if left:
-            DirectKey.PressKey(KEY_LEFT)
-        else:
-            DirectKey.ReleaseKey(KEY_LEFT)
+            if down:
+                DirectKey.PressKey(KEY_DOWN)
+            else:
+                DirectKey.ReleaseKey(KEY_DOWN)
 
-        if right:
-            DirectKey.PressKey(KEY_RIGHT)
-        else:
-            DirectKey.ReleaseKey(KEY_RIGHT)
+            if left:
+                DirectKey.PressKey(KEY_LEFT)
+            else:
+                DirectKey.ReleaseKey(KEY_LEFT)
 
-        # stop = time.time()
-        # print(stop - start) # reaction time
+            if right:
+                DirectKey.PressKey(KEY_RIGHT)
+            else:
+                DirectKey.ReleaseKey(KEY_RIGHT)
 
-        if keyboard.is_pressed('f'):
-            DirectKey.ReleaseKey(KEY_UP)
-            DirectKey.ReleaseKey(KEY_DOWN)
-            DirectKey.ReleaseKey(KEY_LEFT)
-            DirectKey.ReleaseKey(KEY_RIGHT)
-            break
+            #stop = time.time()
+            #print(stop - start) # reaction time
+            #print(speed)
+
+            if keyboard.is_pressed('f'):
+                DirectKey.ReleaseKey(KEY_UP)
+                DirectKey.ReleaseKey(KEY_DOWN)
+                DirectKey.ReleaseKey(KEY_LEFT)
+                DirectKey.ReleaseKey(KEY_RIGHT)
+                break
