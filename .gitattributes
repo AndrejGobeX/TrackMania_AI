@@ -1,1 +1,1 @@
-*.sig linguist-generated
+./Scripts/*.sig linguist-documentation
