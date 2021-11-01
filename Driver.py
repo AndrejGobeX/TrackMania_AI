@@ -53,9 +53,7 @@ KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
 KEY_RIGHT = 0xCD
 
-data_lock = threading.Lock()
 data = None
-finish_flag = False
 
 def data_getter_function():
     global data

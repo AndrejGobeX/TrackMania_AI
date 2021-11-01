@@ -150,58 +150,55 @@ def eval_genomes(genomes, config):
         distance = 0.0
         time.sleep(1)
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as SOCKET:
-            SOCKET.connect(("127.0.0.1", 9000))
-
-            DirectKey.PressKey(KEY_DELETE)
-            DirectKey.ReleaseKey(KEY_DELETE)
-            begin = time.time()
+        DirectKey.PressKey(KEY_DELETE)
+        DirectKey.ReleaseKey(KEY_DELETE)
+        begin = time.time()
 
 
-            while True:
+        while True:
 
-                # uncomment for reaction time measurement
-                # start = time.time()
+            # uncomment for reaction time measurement
+            # start = time.time()
 
-                # screenshot
-                img = ImageGrab.grab()
+            # screenshot
+            img = ImageGrab.grab()
 
-                img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
+            img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
 
-                try:
-                    img = img / 255.0
-                except:
-                    img = img
+            try:
+                img = img / 255.0
+            except:
+                img = img
 
-                # speed
-                speed = data['speed']
-                distance = data['distance']
+            # speed
+            speed = data['speed']
+            distance = data['distance']
 
-                img.append(speed)
+            img.append(speed)
 
-                # net
-                output = np.array(net.activate(img))
+            # net
+            output = np.array(net.activate(img))
 
-                brake = 0.0#output[2]
-                gas = output[1]
-                steer = output[0]
+            brake = output[2]
+            gas = output[1]
+            steer = output[0]
 
-                steer = steer * 2 - 1
-                
-                gamepad.left_joystick_float(x_value_float=steer, y_value_float=0)
-                gamepad.right_trigger_float(value_float=gas)
-                gamepad.left_trigger_float(value_float=brake)
-                gamepad.update()
-
-                # stop = time.time()
-                # print(stop - start) # reaction time
-                finish = time.time()-begin
-                if finish > no_seconds: #or (finish > kill_seconds and speed < kill_speed):
-                    gamepad.reset()
-                    gamepad.update()
-                    break
+            steer = steer * 2 - 1
             
-            genome.fitness = distance
+            gamepad.left_joystick_float(x_value_float=steer, y_value_float=0)
+            gamepad.right_trigger_float(value_float=gas)
+            gamepad.left_trigger_float(value_float=brake)
+            gamepad.update()
+
+            # stop = time.time()
+            # print(stop - start) # reaction time
+            finish = time.time()-begin
+            if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):
+                gamepad.reset()
+                gamepad.update()
+                break
+        
+        genome.fitness = distance
 
 
 
