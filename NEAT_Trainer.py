@@ -51,6 +51,9 @@ down = False
 left = False
 right = False
 
+SOCKET = SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+SOCKET.connect(("127.0.0.1", 9000))
+
 KEY_UP = 0xC8
 KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
@@ -124,92 +127,90 @@ def run_inference(img_np, end_points):
 
 
 def eval_genomes(genomes, config):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(("127.0.0.1", 9000))    
-        for genome_id, genome in genomes:
-            genome.fitness = 10.0
-            net = neat.nn.FeedForwardNetwork.create(genome, config)
-            
-            # Driving
-            print("Ready. Genome id: " + str(genome_id))
-
-            '''while not keyboard.is_pressed('q'):
-                if not keyboard.is_pressed('s'):
-                    continue'''
-
-            begin = time.time()
-            y = []
-            x = []
-            DirectKey.PressKey(KEY_DELETE)
-            DirectKey.ReleaseKey(KEY_DELETE)
-
+    for genome_id, genome in genomes:
+        genome.fitness = 10.0
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
         
+        # Driving
+        print("Ready. Genome id: " + str(genome_id))
 
-            while True:
+        '''while not keyboard.is_pressed('q'):
+            if not keyboard.is_pressed('s'):
+                continue'''
 
-                # uncomment for reaction time measurement
-                # start = time.time()
+        begin = time.time()
+        y = []
+        x = []
+        DirectKey.PressKey(KEY_DELETE)
+        DirectKey.ReleaseKey(KEY_DELETE)
 
-                # screenshot
-                img = ImageGrab.grab()
+    
 
-                img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
+        while True:
 
-                try:
-                    img = img / 255.0
-                except:
-                    img = img
+            # uncomment for reaction time measurement
+            # start = time.time()
 
-                # speed
-                speed = unpack(b'@f', s.recv(4))[0] * 3.6 / 300
-                s.recv(40)
+            # screenshot
+            img = ImageGrab.grab()
 
-                img.append(speed)
-                y.append(speed)
-                x.append(time.time()-begin)
+            img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
 
-                # net
-                output = np.array(net.activate(img))
-                output = output > threshold
+            try:
+                img = img / 255.0
+            except:
+                img = img
 
-                up = output[2]
-                #down = output[2]
-                left = output[1]
-                right = output[0]
+            # speed
+            speed = unpack(b'@f', SOCKET.recv(4))[0] * 3.6 / 300
+            SOCKET.recv(40)
 
-                if up:
-                    DirectKey.PressKey(KEY_UP)
-                else:
-                    DirectKey.ReleaseKey(KEY_UP)
+            img.append(speed)
+            y.append(speed)
+            x.append(time.time()-begin)
 
-                if down:
-                    DirectKey.PressKey(KEY_DOWN)
-                else:
-                    DirectKey.ReleaseKey(KEY_DOWN)
+            # net
+            output = np.array(net.activate(img))
+            output = output > threshold
 
-                if left:
-                    DirectKey.PressKey(KEY_LEFT)
-                else:
-                    DirectKey.ReleaseKey(KEY_LEFT)
+            up = output[2]
+            #down = output[2]
+            left = output[1]
+            right = output[0]
 
-                if right:
-                    DirectKey.PressKey(KEY_RIGHT)
-                else:
-                    DirectKey.ReleaseKey(KEY_RIGHT)
+            if up:
+                DirectKey.PressKey(KEY_UP)
+            else:
+                DirectKey.ReleaseKey(KEY_UP)
 
-                # stop = time.time()
-                # print(stop - start) # reaction time
-                finish = time.time()-begin
-                if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
-                    DirectKey.ReleaseKey(KEY_UP)
-                    DirectKey.ReleaseKey(KEY_DOWN)
-                    DirectKey.ReleaseKey(KEY_LEFT)
-                    DirectKey.ReleaseKey(KEY_RIGHT)
-                    break
-            
-            #print('Time:')
-            #t = float(input())
-            genome.fitness = np.trapz(y, x)#max_fitness - t
+            if down:
+                DirectKey.PressKey(KEY_DOWN)
+            else:
+                DirectKey.ReleaseKey(KEY_DOWN)
+
+            if left:
+                DirectKey.PressKey(KEY_LEFT)
+            else:
+                DirectKey.ReleaseKey(KEY_LEFT)
+
+            if right:
+                DirectKey.PressKey(KEY_RIGHT)
+            else:
+                DirectKey.ReleaseKey(KEY_RIGHT)
+
+            # stop = time.time()
+            # print(stop - start) # reaction time
+            finish = time.time()-begin
+            if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
+                DirectKey.ReleaseKey(KEY_UP)
+                DirectKey.ReleaseKey(KEY_DOWN)
+                DirectKey.ReleaseKey(KEY_LEFT)
+                DirectKey.ReleaseKey(KEY_RIGHT)
+                break
+        
+        #print('Time:')
+        #t = float(input())
+        genome.fitness = np.trapz(y, x)#max_fitness - t
 
 
 
@@ -231,8 +232,11 @@ def run(config_file, checkpoint=None):
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(5))
 
+
     # Run for up to global no generations.
     winner = p.run(eval_genomes, no_generations)
+
+    SOCKET.close()
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
