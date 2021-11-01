@@ -23,7 +23,7 @@ All the scripts contain instructions for arguments, running, etc. so read them b
 | Dataset.py | Contains functions which take a dataset and preprocess it |
 | DirectKey.py | Contains ctypes functions for key presses ( *pip packages won't work* ) |
 | Driver.py | Runs in the background while the game is running and presses buttons |
-| GetData.py | Preview of how game data is captured in python, not used for training/driving |
+| GetData.py | Functions for getting in game data (speed, distance, etc.) |
 | Mods.py | Functions for data preprocessing |
 | NEAT_Trainer.py | Neuroevolution trainer |
 | ScreenRecorder.py | Background script to capture frames while you play |

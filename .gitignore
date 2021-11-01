@@ -12,3 +12,4 @@ Test.py
 .idea/*
 NEAT/visualize.py
 *.gv
+vgamepadtest.py

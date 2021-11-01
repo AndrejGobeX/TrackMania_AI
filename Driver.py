@@ -14,6 +14,8 @@ import sys
 import DirectKey
 import socket
 from struct import unpack
+import GetData
+import threading
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -51,73 +53,84 @@ KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
 KEY_RIGHT = 0xCD
 
+data_lock = threading.Lock()
+data = None
+finish_flag = False
+
+def data_getter_function():
+    global data
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(("127.0.0.1", 9000))
+        while True:
+            data = GetData.get_data(s)
+
+
+data_getter_thread = threading.Thread(target=data_getter_function, daemon=True)
+data_getter_thread.start()
+
 print("Ready")
 
 while not keyboard.is_pressed('q'):
     if not keyboard.is_pressed('s'):
         continue
+   
+    while True:
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        
-        s.connect(("127.0.0.1", 9000))
-        
-        while True:
+        # uncomment for reaction time measurement
+        #start = time.time()
 
-            # uncomment for reaction time measurement
-            #start = time.time()
+        # screenshot
+        img = ImageGrab.grab()
 
-            # screenshot
-            img = ImageGrab.grab()
+        img = mod(img, model)
 
-            img = mod(img, model)
+        try:
+            img = img / 255.0
+        except:
+            img = img
 
-            try:
-                img = img / 255.0
-            except:
-                img = img
+        # speed
+        speed = data['speed']
 
-            # speed
-            speed = unpack(b'@f', s.recv(4))[0] * 3.6
+        x = (np.array([img]), np.array([speed]))
 
-            s.recv(40)
+        output = model.predict(x)[0]
+        output = output > threshold
 
-            x = (np.array([img]), np.array([speed]))
+        up = output[3]
+        down = output[2]
+        left = output[1]
+        right = output[0]
 
-            output = model.predict(x)[0]
-            output = output > threshold
+        if up:
+            DirectKey.PressKey(KEY_UP)
+        else:
+            DirectKey.ReleaseKey(KEY_UP)
 
-            up = output[3]
-            down = output[2]
-            left = output[1]
-            right = output[0]
+        if down:
+            DirectKey.PressKey(KEY_DOWN)
+        else:
+            DirectKey.ReleaseKey(KEY_DOWN)
 
-            if up:
-                DirectKey.PressKey(KEY_UP)
-            else:
-                DirectKey.ReleaseKey(KEY_UP)
+        if left:
+            DirectKey.PressKey(KEY_LEFT)
+        else:
+            DirectKey.ReleaseKey(KEY_LEFT)
 
-            if down:
-                DirectKey.PressKey(KEY_DOWN)
-            else:
-                DirectKey.ReleaseKey(KEY_DOWN)
+        if right:
+            DirectKey.PressKey(KEY_RIGHT)
+        else:
+            DirectKey.ReleaseKey(KEY_RIGHT)
 
-            if left:
-                DirectKey.PressKey(KEY_LEFT)
-            else:
-                DirectKey.ReleaseKey(KEY_LEFT)
+        #stop = time.time()
+        #print(stop - start) # reaction time
+        #print(speed)
 
-            if right:
-                DirectKey.PressKey(KEY_RIGHT)
-            else:
-                DirectKey.ReleaseKey(KEY_RIGHT)
+        if keyboard.is_pressed('f'):
+            DirectKey.ReleaseKey(KEY_UP)
+            DirectKey.ReleaseKey(KEY_DOWN)
+            DirectKey.ReleaseKey(KEY_LEFT)
+            DirectKey.ReleaseKey(KEY_RIGHT)
+            break
 
-            #stop = time.time()
-            #print(stop - start) # reaction time
-            #print(speed)
-
-            if keyboard.is_pressed('f'):
-                DirectKey.ReleaseKey(KEY_UP)
-                DirectKey.ReleaseKey(KEY_DOWN)
-                DirectKey.ReleaseKey(KEY_LEFT)
-                DirectKey.ReleaseKey(KEY_RIGHT)
-                break
+data_getter_thread.join()

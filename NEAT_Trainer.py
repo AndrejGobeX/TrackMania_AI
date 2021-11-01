@@ -17,6 +17,9 @@ from PIL import ImageGrab, ImageEnhance, Image
 import cv2
 import socket
 from struct import unpack
+import vgamepad as vg
+import GetData
+import threading
 # In order to visualize the training net, you need to copy visualize.py file into the NEAT directory (you can find it in the NEAT repo)
 # Because of the licence, I am not going to copy it to my github repository
 # You can still train your network without it
@@ -37,12 +40,12 @@ image_width = 100
 image_height = 100
 
 # hyperparams
-threshold = 0.5
+#threshold = 0.5
 no_generations = 20
-max_fitness = 100.0
+#max_fitness = 100.0
 no_seconds = 20
 kill_seconds = 5
-kill_speed = 51 / 300.0
+kill_speed = 51
 no_lines = 5
 checkpoint = None
 
@@ -51,14 +54,24 @@ down = False
 left = False
 right = False
 
-SOCKET = SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-SOCKET.connect(("127.0.0.1", 9000))
-
 KEY_UP = 0xC8
 KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
 KEY_RIGHT = 0xCD
 KEY_DELETE = 0xD3
+
+gamepad = vg.VX360Gamepad()
+
+def data_getter_function():
+    global data
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(("127.0.0.1", 9000))
+        while True:
+            data = GetData.get_data(s)
+
+
+data_getter_thread = threading.Thread(target=data_getter_function, daemon=True)
+data_getter_thread.start()
 
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
@@ -134,83 +147,61 @@ def eval_genomes(genomes, config):
         # Driving
         print("Ready. Genome id: " + str(genome_id))
 
-        '''while not keyboard.is_pressed('q'):
-            if not keyboard.is_pressed('s'):
-                continue'''
+        distance = 0.0
+        time.sleep(1)
 
-        begin = time.time()
-        y = []
-        x = []
-        DirectKey.PressKey(KEY_DELETE)
-        DirectKey.ReleaseKey(KEY_DELETE)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as SOCKET:
+            SOCKET.connect(("127.0.0.1", 9000))
 
-    
+            DirectKey.PressKey(KEY_DELETE)
+            DirectKey.ReleaseKey(KEY_DELETE)
+            begin = time.time()
 
-        while True:
 
-            # uncomment for reaction time measurement
-            # start = time.time()
+            while True:
 
-            # screenshot
-            img = ImageGrab.grab()
+                # uncomment for reaction time measurement
+                # start = time.time()
 
-            img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
+                # screenshot
+                img = ImageGrab.grab()
 
-            try:
-                img = img / 255.0
-            except:
-                img = img
+                img = mod_shrink_n_measure(img, image_width, image_height, no_lines)
 
-            # speed
-            speed = unpack(b'@f', SOCKET.recv(4))[0] * 3.6 / 300
-            SOCKET.recv(40)
+                try:
+                    img = img / 255.0
+                except:
+                    img = img
 
-            img.append(speed)
-            y.append(speed)
-            x.append(time.time()-begin)
+                # speed
+                speed = data['speed']
+                distance = data['distance']
 
-            # net
-            output = np.array(net.activate(img))
-            output = output > threshold
+                img.append(speed)
 
-            up = output[2]
-            #down = output[2]
-            left = output[1]
-            right = output[0]
+                # net
+                output = np.array(net.activate(img))
 
-            if up:
-                DirectKey.PressKey(KEY_UP)
-            else:
-                DirectKey.ReleaseKey(KEY_UP)
+                brake = 0.0#output[2]
+                gas = output[1]
+                steer = output[0]
 
-            if down:
-                DirectKey.PressKey(KEY_DOWN)
-            else:
-                DirectKey.ReleaseKey(KEY_DOWN)
+                steer = steer * 2 - 1
+                
+                gamepad.left_joystick_float(x_value_float=steer, y_value_float=0)
+                gamepad.right_trigger_float(value_float=gas)
+                gamepad.left_trigger_float(value_float=brake)
+                gamepad.update()
 
-            if left:
-                DirectKey.PressKey(KEY_LEFT)
-            else:
-                DirectKey.ReleaseKey(KEY_LEFT)
-
-            if right:
-                DirectKey.PressKey(KEY_RIGHT)
-            else:
-                DirectKey.ReleaseKey(KEY_RIGHT)
-
-            # stop = time.time()
-            # print(stop - start) # reaction time
-            finish = time.time()-begin
-            if finish > no_seconds or (finish > kill_seconds and speed < kill_speed):#keyboard.is_pressed('f'):
-                DirectKey.ReleaseKey(KEY_UP)
-                DirectKey.ReleaseKey(KEY_DOWN)
-                DirectKey.ReleaseKey(KEY_LEFT)
-                DirectKey.ReleaseKey(KEY_RIGHT)
-                break
-        
-        #print('Time:')
-        #t = float(input())
-        genome.fitness = np.trapz(y, x)#max_fitness - t
+                # stop = time.time()
+                # print(stop - start) # reaction time
+                finish = time.time()-begin
+                if finish > no_seconds: #or (finish > kill_seconds and speed < kill_speed):
+                    gamepad.reset()
+                    gamepad.update()
+                    break
+            
+            genome.fitness = distance
 
 
 
@@ -235,8 +226,6 @@ def run(config_file, checkpoint=None):
 
     # Run for up to global no generations.
     winner = p.run(eval_genomes, no_generations)
-
-    SOCKET.close()
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
