@@ -201,8 +201,6 @@ def eval_genomes(genomes, config):
         genome.fitness = distance
 
 
-
-
 def run(config_file, checkpoint=None):
     # Load configuration.
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,

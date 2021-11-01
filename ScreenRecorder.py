@@ -13,12 +13,25 @@ import pathlib
 import sys
 import socket
 from struct import unpack
+import GetData
+import threading
 
 if len(sys.argv) < 2:
     print('Not enough arguments.')
     exit()
 
 driver_camera = sys.argv[1]
+
+def data_getter_function():
+    global data
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(("127.0.0.1", 9000))
+        while True:
+            data = GetData.get_data(s)
+
+
+data_getter_thread = threading.Thread(target=data_getter_function, daemon=True)
+data_getter_thread.start()
 
 # old recorder
 
@@ -70,36 +83,33 @@ while not keyboard.is_pressed('q'):
     if not keyboard.is_pressed('s'):
         continue
 
-    temp_stint = []
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(("127.0.0.1", 9000))    
-        while True:
-            x = x+1
+    temp_stint = []  
+    while True:
+        x = x+1
 
-            frame = ImageGrab.grab()
-            
-            speed = int(unpack(b'@f', s.recv(4))[0] * 3.6)
-            s.recv(40)
+        frame = ImageGrab.grab()
+        
+        speed = data['speed']
 
-            up = int(keyboard.is_pressed('up'))
-            down = int(keyboard.is_pressed('down'))
-            left = int(keyboard.is_pressed('left'))
-            right = int(keyboard.is_pressed('right'))
+        up = int(keyboard.is_pressed('up'))
+        down = int(keyboard.is_pressed('down'))
+        left = int(keyboard.is_pressed('left'))
+        right = int(keyboard.is_pressed('right'))
 
-            image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + \
-                str(log) + '_' + str(x) + '_' + str(speed) + '.jpg'
-            
-            temp_stint.append(image)
-            
-            frame.save(image)
-            print(image)
+        image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + \
+            str(log) + '_' + str(x) + '_' + str(speed) + '.jpg'
+        
+        temp_stint.append(image)
+        
+        frame.save(image)
+        print(image)
 
-            if keyboard.is_pressed('x'):
-                clear_list.append(temp_stint)
-                break
+        if keyboard.is_pressed('x'):
+            clear_list.append(temp_stint)
+            break
 
-            if keyboard.is_pressed('f'):
-                break
+        if keyboard.is_pressed('f'):
+            break
 
 for stint in clear_list:
     for image in stint:
