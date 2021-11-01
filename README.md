@@ -17,7 +17,7 @@ Neptune is a convolutional network containing two conv2d layers. It just takes a
 Maniack, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
 ![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)
 ## Contents
-All the scripts contain instructions for arguments, running, etc. so read them before playing.\
+All the scripts contain instructions for arguments, running, etc. so read them before playing.
 | Filename | Brief description |
 | -------- | ----------------- |
 | Dataset.py | Contains functions which take a dataset and preprocess it |
