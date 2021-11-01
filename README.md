@@ -17,15 +17,19 @@ Neptune is a convolutional network containing two conv2d layers. It just takes a
 Maniack, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
 ![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)
 ## Contents
+All the scripts contain instructions for arguments, running, etc. so read them before playing.\
 | Filename | Brief description |
 | -------- | ----------------- |
 | Dataset.py | Contains functions which take a dataset and preprocess it |
 | DirectKey.py | Contains ctypes functions for key presses ( *pip packages won't work* ) |
 | Driver.py | Runs in the background while the game is running and presses buttons |
+| GetData.py | Preview of how game data is captured in python, not used for training/driving |
 | Mods.py | Functions for data preprocessing |
+| NEAT_Trainer.py | Neuroevolution trainer |
 | ScreenRecorder.py | Background script to capture frames while you play |
-| SpeedCapture | Functions to get speed value from the game |
+| SpeedCapture | ~~Functions to get speed value from the game~~ (*deprecated*) |
 | Trainer.py | Trains the neural network |
+| Trainer.ipynb | Starting point for Colab training (if you do not wish to train on your computer) |
 ## Setup
 I have tested this procedure and it should work on any computer. The main problems here are resolution and camera. You should edit the scripts with respect to your resolution and, while in Trackmania, switch to first person (currently, nets are trained with first person because it is a lot easier for AI to understand movement and to follow the track that way).
 1. Download Trackmania and Python with all the necessary packages.
