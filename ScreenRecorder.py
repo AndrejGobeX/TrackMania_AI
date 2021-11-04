@@ -4,9 +4,9 @@
 # x - same as f, but cancels (no shots will be saved)
 # q - quits recorder
 #
-# python ScreenRecorder.py first_person
+# python ScreenRecorder.py first_person width height
 
-from PIL import ImageGrab
+from PIL import Image
 import numpy as np
 import keyboard
 import pathlib
@@ -15,8 +15,9 @@ import socket
 from struct import unpack
 import GetData
 import threading
+from Screenshot import screenshot
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 4:
     print('Not enough arguments.')
     exit()
 
@@ -45,16 +46,14 @@ else:
     log = 0
 
 
-img = ImageGrab.grab()
+#img = ImageGrab.grab()
 
 # rldu
 
-frame_width = img.width 
-frame_height = img.height
+frame_width = int(sys.argv[2]) 
+frame_height = int(sys.argv[3])
 print(frame_width)
 print(frame_height) 
-
-size = (frame_width, frame_height) 
 
 x = 0
 
@@ -87,9 +86,9 @@ while not keyboard.is_pressed('q'):
     while True:
         x = x+1
 
-        frame = ImageGrab.grab()
-        
         speed = data['speed']
+        
+        frame = Image.fromarray(screenshot(w=frame_width, h=frame_height))
 
         up = int(keyboard.is_pressed('up'))
         down = int(keyboard.is_pressed('down'))
@@ -97,7 +96,7 @@ while not keyboard.is_pressed('q'):
         right = int(keyboard.is_pressed('right'))
 
         image = image_dir + str(up+down*10+left*100+right*1000+10000)[1:] + '/' + \
-            str(log) + '_' + str(x) + '_' + str(speed) + '.jpg'
+            str(log) + '_' + str(x) + '_' + str(int(speed)) + '.jpg'
         
         temp_stint.append(image)
         
