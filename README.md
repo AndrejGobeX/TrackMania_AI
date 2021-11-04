@@ -3,7 +3,8 @@ Neural network driver for Trackmania
 ## Intro and goals
 Computer vision and self-driving cars are one of the most common topics in ML/AI nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
 I played Trackmania when I was young and figured that it could be a good environment for this project.\
-Goal here is to make a decent driver. It is not (yet) a racing material.\
+~~Goal here is to make a decent driver. It is not (yet) a racing material.~~\
+New goal is to make a competitive driver (against other AI's).\
 If you have any ideas, comments or improvements, let me know.
 ## Details
 This project uses both supervised and reinforcement approaches (~~RL branch is dedicated to the latter one~~).\
@@ -31,11 +32,11 @@ All the scripts contain instructions for arguments, running, etc. so read them b
 | Trainer.py | Trains the neural network |
 | Trainer.ipynb | Starting point for Colab training (if you do not wish to train on your computer) |
 ## Setup
-I have tested this procedure and it should work on any computer. The main problems here are resolution and camera. You should edit the scripts with respect to your resolution and, while in Trackmania, switch to first person (currently, nets are trained with first person because it is a lot easier for AI to understand movement and to follow the track that way).
+I have tested this procedure and it should work on any computer. I am working on windowed mode, but for now it only works in fullscreen mode. The main problem here is the camera, so you should switch to first person (press `3` twice to go full first person, screenshots are above) (currently, nets are trained with first person because it is a lot easier for AI to understand movement and to follow the track that way).
 1. Download Trackmania and Python with all the necessary packages.
 2. Download Openplanet and install it.
 3. Git clone this repository.
-3. Copy the `Plugin*` files from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Scripts`.
+3. Copy the `Plugin*` files from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Scripts`. (If there is no `Scripts` directory in `OpenplanetNext`, run Trackmania and exit it)
 4. Run Trackmania, press `F3` to open Openplanet, go to Openplanet > Log and check if the script is running (should print Waiting for incomming connection). You can, if necessary, reload the plugin from Developer > Reload plugin. Open any map (nets are trained on basic circuits, so the best thing is to create a new one), and enter driving mode. Press `F3` again to close the openplanet overlay (scripts capture full-screen and overlays will mess them up).
 5. Alt-tab or press Win key and open command prompt. Find Driver.py and enter `python Driver.py Neptune` (or Maniack).
 6. Wait until you see Press s to begin, alt-tab to Trackmania, unpause the game and press `S`.
