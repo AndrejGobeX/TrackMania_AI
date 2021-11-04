@@ -28,6 +28,7 @@ All the scripts contain instructions for arguments, running, etc. so read them b
 | Mods.py | Functions for data preprocessing |
 | NEAT_Trainer.py | Neuroevolution trainer |
 | ScreenRecorder.py | Background script to capture frames while you play |
+| Screenshot.py | Fast screenshot functions |
 | SpeedCapture | ~~Functions to get speed value from the game~~ (*deprecated*) |
 | Trainer.py | Trains the neural network |
 | Trainer.ipynb | Starting point for Colab training (if you do not wish to train on your computer) |
@@ -50,3 +51,4 @@ The latest versions are used for all packages (31.10.2021.):
 * numpy/numpy - array manipulation
 * opencv/opencv - image preprocessing
 * tensorflow - ML API
+* mhammond/pywin32 - fast screenshots
