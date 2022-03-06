@@ -4,7 +4,7 @@ import threading
 
 def get_data(s):
         data = dict()
-        data['speed'] = unpack(b'@f', s.recv(4))[0] * 3.6 # speed
+        data['speed'] = unpack(b'@f', s.recv(4))[0] # speed
         data['distance'] = unpack(b'@f', s.recv(4))[0] # distance
         data['x'] = unpack(b'@f', s.recv(4))[0] # x
         data['y'] = unpack(b'@f', s.recv(4))[0] # y

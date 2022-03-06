@@ -8,6 +8,11 @@ SendInput = ctypes.windll.user32.SendInput
 # C struct redefinitions 
 PUL = ctypes.POINTER(ctypes.c_ulong)
 
+KEY_UP = 0xC8
+KEY_DOWN = 0xD0
+KEY_LEFT = 0xCB
+KEY_RIGHT = 0xCD
+KEY_DELETE = 0xD3
 
 class KeyBdInput(ctypes.Structure):
     _fields_ = [("wVk", ctypes.c_ushort),

@@ -171,7 +171,7 @@ def eval_genomes(genomes, config):
                 img = img
 
             # speed
-            speed = data['speed']
+            speed = data['speed']*3.6
             distance = data['distance']
 
             img.append(speed)

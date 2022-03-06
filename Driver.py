@@ -88,7 +88,7 @@ while not keyboard.is_pressed('q'):
             img = img
 
         # speed
-        speed = data['speed']
+        speed = data['speed']*3.6
 
         x = (np.array([img]), np.array([speed]))
 
