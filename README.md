@@ -33,6 +33,7 @@ All the scripts contain instructions for arguments, running, etc. so read them b
 | Trainer.py | Trains the neural network |
 | Trainer.ipynb | Starting point for Colab training (if you do not wish to train on your computer) |
 ## Setup
+I expect you have basic knowledge of python. Explore python and openplanet and check the issues before making a new one.\
 I have tested this procedure and it should work on any computer. I am working on windowed mode, but for now it only works in fullscreen mode. The main problem here is the camera, so you should switch to first person (press `3` twice to go full first person, screenshots are above) (currently, nets are trained with first person because it is a lot easier for AI to understand movement and to follow the track that way).\
 **YOU DO NOT NEED STANDARD/CLUB ACCESS TO USE OPENPLANET AND THIS PROJECT.**\
 As mentioned in the issues, Openplanet won't load the plugin if run from EpicGames launcher. If you encounter these problems, try running Trackmania from .exe or use Ubisoft Connect.
