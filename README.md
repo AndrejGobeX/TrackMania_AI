@@ -4,8 +4,11 @@ Neural network driver for Trackmania
 Computer vision and self-driving cars are one of the most common topics in ML/AI nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
 I played Trackmania when I was young and figured that it could be a good environment for this project.\
 ~~Goal here is to make a decent driver. It is not (yet) a racing material.~~\
-New goal is to make a competitive driver (against other AI's).\
+New goal is to make a competitive driver (against other AI's) and, hopefully, advance this project to the real car (we have already tested the Maniack net on an RC car, teaser below).\
 If you have any ideas, comments or improvements, let me know.
+
+![Preview RC](Engines/rc_car_preview.gif)
+
 ## Details
 This project uses both supervised and reinforcement approaches (~~RL branch is dedicated to the latter one~~).\
 I've split the dataset into two categories: third_person and first_person, based on the camera.\
