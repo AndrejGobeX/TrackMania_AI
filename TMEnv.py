@@ -1,3 +1,4 @@
+import math
 import gym
 from gym import spaces
 from time import sleep, time
@@ -12,18 +13,28 @@ import GetData
 STEER = 0
 ACCELERATE = 1
 BRAKE = 2
-RND = 1
+FLOAT_PRECISION = 3
 
 TIME = 20.0
+WALL_CONTACT_FRONT = 5.5
+WALL_CONTACT_WHEELS = 5.0
+WALL_CONTACT_SIDE = 4.5
+WALL_COEF = 300
 
-CHECKPOINT_REWARD = 100.0
-WALL_REWARD = -7.0
+# util functions
+def cross_product(x, y):
+  return x[0]*y[1] - x[1]*y[0]
 
-def check_checkpoint(p, r, q, s):
-  rxs = np.cross(r, s)
+
+def norm(x):
+    return math.sqrt(x[0]**2 + x[1]**2)
+
+
+def vector_intersection(p, r, q, s):
+  rxs = cross_product(r, s)
   qmp = q - p
-  qpxs = np.cross(qmp, s)
-  qpxr = np.cross(qmp, r)
+  qpxs = cross_product(qmp, s)
+  qpxr = cross_product(qmp, r)
   if rxs == 0:
     return np.array([-1, -1])
   t = qpxs/rxs
@@ -33,30 +44,148 @@ def check_checkpoint(p, r, q, s):
   return np.array([-1, -1])
 
 
+def vector_angle(r):
+    v = r[0]/norm(r)
+    θ = np.arccos(v)
+    if r[1] < 0:
+      θ *= -1
+    return θ
+
+
+def three_point_circle_inverse_radius(A, B, C):
+  B -= A
+  C -= A
+  B2 = B[0]**2 + B[1]**2
+  C2 = C[0]**2 + C[1]**2
+  #D=2[Ax(By−Cy)+Bx(Cy−Ay)+Cx(Ay−By)]
+  D=2*(B[0]*C[1] - C[0]*B[1])
+  #Rx=[(Ax**2+Ay**2)(By−Cy)+(Bx**2+By**2)(Cy−Ay)+(Cx**2+Cy**2)(Ay−By)]/D
+  Rx=(B2*C[1] - C2*B[1])/D
+  #Ry=[(Ax**2+Ay**2)(Cx−Bx)+(Bx**2+By**2)(Ax−Cx)+(Cx**2+Cy**2)(Bx−Ax)]/D
+  Ry=(-B2*C[0] + C2*B[0])/D
+  return 1/math.sqrt(Rx**2 + Ry**2)
+
+
+def curvature(centerline, cur_block, cur_projection, delta=50, no_points=2):
+    iter_block = cur_block
+    battery = delta
+    points = []
+    while no_points>0:
+        no_points-=1
+        while battery > 0:
+            if iter_block == len(centerline):
+                break
+            
+            dif = centerline[iter_block] - cur_projection
+            z = norm(dif)
+            battery -= z
+            
+            if battery < 0:
+                dif*=battery/z
+                cur_projection = centerline[iter_block]+dif
+                break
+
+            cur_projection = centerline[iter_block]
+            iter_block += 1
+        battery = delta
+        points.append(cur_projection)
+    return points
+
+
+'''def sensors(blocks, cur_block, xy, angle, θ=0, max_length=100, start=4, finish=4):
+    # angle
+    #angle = np.arccos(dxdy[0]) * np.sign(dxdy[1]) + θ
+    angle += θ
+    v = np.array([np.cos(angle)*max_length, np.sin(angle)*max_length])
+    
+    # block range
+    start_block = cur_block - start
+    start_block = start_block if start_block > -1 else 0
+    finish_block = cur_block + finish
+    finish_block = finish_block if finish_block <= len(blocks) else len(blocks)
+
+    # search
+    best_distance = max_length
+    no_point = np.array([-1, -1])
+    best_point = no_point
+
+    for i in range(start_block, finish_block):
+        block = blocks[i]
+        for j in range(len(block[0])-1):
+            for s in range(0, 3, 2):
+                wall_first = np.array([block[s][j], block[s+1][j]])
+                wall_second = np.array([block[s][j+1], block[s+1][j+1]])
+                intersection = vector_intersection(xy, v, wall_first, wall_second - wall_first)
+                if not np.array_equal(intersection, no_point):
+                    d = norm(xy-intersection)
+                    if d < best_distance:
+                        best_distance = d
+                        best_point = intersection
+    return [best_point, best_distance]'''
+
+
+def sensors(blocks, cur_block, xy, angle, θ=0, max_length=100, start=10, finish=30):
+    # angle
+    #angle = np.arccos(dxdy[0]) * np.sign(dxdy[1]) + θ
+    angle += θ
+    v = np.array([np.cos(angle)*max_length, np.sin(angle)*max_length])
+    
+    # block range
+    start_block = cur_block - start
+    start_block = start_block if start_block > -1 else 0
+    finish_block = cur_block + finish
+    finish_block = finish_block if finish_block < len(blocks) else len(blocks)-1
+
+    # search
+    best_distance = max_length
+    no_point = np.array([-1, -1])
+    best_point = no_point
+
+    for i in range(start_block, finish_block):
+        for s in range(0, 3, 2):
+            wall_first = np.array([blocks[i][s], blocks[i][s+1]])
+            wall_second = np.array([blocks[i+1][s], blocks[i+1][s+1]])
+            intersection = vector_intersection(xy, v, wall_first, wall_second - wall_first)
+            if not np.array_equal(intersection, no_point):
+                d = norm(xy-intersection)
+                if d < best_distance:
+                    best_distance = d
+                    best_point = intersection
+                else:
+                  break
+    return [best_point, best_distance]
+
+
 def normalize_speed(speed):
   return speed * 0.0036
 
-
+# gym class
 class TMEnv(gym.Env):
   """Trackmania Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, map_path, verbose=False):
+  def __init__(self, map_path):
     super(TMEnv, self).__init__()
+
+    # action and observation
     self.action_space = spaces.Box(
-        np.array([-1, 0, 0], dtype=np.float32), np.array([1, 1, 1], dtype=np.float32) # steer, gas, brake
+        # steer, gas/brake
+        np.array([-1, -1], dtype=np.float32), np.array([1, 1], dtype=np.float32)
     )
     self.observation_space = spaces.Box(
-        np.array(np.zeros(14), dtype=np.float32), np.array(np.ones(14), dtype=np.float32) # data
+        # 7 x walls, speed, θ, previous steer, wall contact, curvature
+        np.array(np.array([0]*8 + [-np.pi, -1, 0, 0]), dtype=np.float32), np.array(np.array([1]*8 + [np.pi, 1, 1, 1]), dtype=np.float32) # data
     )
 
+    # env setup
     self.map_path = map_path
-    self.racing_line_path = map_path.split('.txt')[0] + '.racing.line'
-    self.done = False
-    self.verbose = verbose
-    self.timer = time()
-    self.stopwatch = 0.0
-    self.previous_stopwatch = 0.0
+    self.no_point = np.array([-1, -1])
+
+    # get blocks of the map
+    self.blocks = get_map_data(map_path)
+    self.centerline = [
+      (np.array([self.blocks[i][0], self.blocks[i][1]]) + np.array([self.blocks[i][2], self.blocks[i][3]]))/2
+      for i in range(len(self.blocks))] # x, y, time
 
     # function that captures data from openplanet    
     def data_getter_function():
@@ -71,251 +200,133 @@ class TMEnv(gym.Env):
 
     sleep(0.2) # wait for connection
 
-    self.previous_location = np.round([self.data['x'], self.data['z']], RND)
-    self.location = np.round([self.data['x'], self.data['z']], RND)
-
-    # get blocks of the map
-    self.blocks = get_map_data(map_path)
-    self.current_block_index = 0 # start at the first block
-    self.current_checkpoint_index = 0
-    self.no_blocks = len(self.blocks)
-    # mini checkpoints, first is skipped since it is the last of the previous block, start block's first is never crossed
-    self.racing_line = np.array([
-        np.round([np.append((np.array([block[0][i], block[1][i]])+np.array([block[2][i], block[3][i]]))/2, 100) for i in range(1, len(block[0]))], RND) # x, y, time
-    for block in self.blocks], dtype=object)
-
-    self.direction = self.racing_line[0][0][:-1] - np.array([(self.blocks[0][0][0]+self.blocks[0][2][1])/2, (self.blocks[0][1][0]+self.blocks[0][3][1])/2])
-    #self.previous_difference = self.racing_line[0][0][:-1] - self.location
-    #self.previous_difference = np.linalg.norm(self.previous_difference)
+    self.respawn()
 
 
-  def save_racing_line(self):
-    with open(self.racing_line_path, 'wb') as file:
-      np.save(file, self.racing_line)
-
-  def load_racing_line(self):
-    with open(self.racing_line_path, 'rb') as file:
-      self.racing_line = np.load(file, allow_pickle=True)
-
-  def move(self):
-    reward = 0.0
-    intersection = [0, 0]
-    while intersection[0] != -1:
-      cp_r = np.array([self.blocks[self.current_block_index][0][self.current_checkpoint_index+1], self.blocks[self.current_block_index][1][self.current_checkpoint_index+1]])
-      cp_l = np.array([self.blocks[self.current_block_index][2][self.current_checkpoint_index+1], self.blocks[self.current_block_index][3][self.current_checkpoint_index+1]])
-      intersection = check_checkpoint(
-        self.location,
-        self.previous_location - self.location,
-        cp_r,
-        cp_l - cp_r
-      )
-      if intersection[0] != -1:
-        small_reward = self.racing_line[self.current_block_index][self.current_checkpoint_index][2] - self.stopwatch
-        #if small_reward > 0: TODO: uncomment
-          # update racing line
-          #self.racing_line[self.current_block_index][self.current_checkpoint_index] = np.append(intersection, self.stopwatch)
-        if self.verbose:
-          print("Crossed mini checkpoint "+str(self.current_block_index)+", "+str(self.current_checkpoint_index))
-          print([intersection, self.stopwatch])
-        self.current_checkpoint_index += 1
-        # if final in block
-        if self.current_checkpoint_index == len(self.racing_line[self.current_block_index]):
-          self.current_block_index += 1
-          self.current_checkpoint_index = 0
-        reward += CHECKPOINT_REWARD # + small_reward TODO: uncomment
-
-    #difference = self.racing_line[self.current_block_index][self.current_checkpoint_index][:-1] - self.location
-    #difference = np.linalg.norm(difference)
-    #if reward == 0:
-    #  reward += (self.previous_difference - difference)/36*20
-    #self.previous_difference = difference
-
-    return reward
-
-  def next_checkpoint(self):
-    dy = self.direction[1]
-    dx = self.direction[0]
-    θ = 0.0
-    if dx == 0:
-      θ = np.pi/2
-      θ *= np.sign(dy)
-    else:
-      k = dy/dx
-      θ = np.arctan(k)
-      if dx < 0.0:
-        θ += np.pi
-    
-    checks = 3
-    bi = self.current_block_index
-    ci = self.current_checkpoint_index-1
-    obs = []
-    while checks > 0:
-      checks -= 1
-      ci += 1
-      if self.no_blocks <= bi:
-        obs.append(1)
-        obs.append(0)
-        continue
-      if len(self.racing_line[bi]) <= ci:
-        ci = 0
-        bi += 1
-        if self.no_blocks <= bi:
-          obs.append(1)
-          obs.append(0)
-          continue
-      delta_point = self.racing_line[bi][ci][:-1] - self.location
-      x = delta_point[0]*np.cos(θ) + delta_point[1]*np.sin(θ)
-      y = -delta_point[0]*np.sin(θ) + delta_point[1]*np.cos(θ)
-      ret = np.clip([x, y], -100.0, 100.0)/100
-      ret[0] = np.abs(ret[0])*2-1
-      obs.append(ret[0])
-      obs.append(ret[1])
-
-    if self.flip:
-      for i in range(len(obs)):
-        if i&1:
-          obs[i] = -obs[i]
-    return np.array(obs)
-
-  def measure(self, theta):
-    blocks = self.blocks
-    block_i = self.current_block_index
-    location = self.location
-    prev_location = self.previous_location
-
-    vx = np.sign(self.direction[0])
-    vy = np.sign(self.direction[1])
-    edge_case = False
-    if vx == 0:
-        angle = np.pi/2*vy
-    else:
-        k = (self.direction[1])/(self.direction[0])
-        angle = np.arctan(k)
-        if vx < 0:
-            angle += np.pi
-    angle += theta
-    if np.abs(angle) == np.pi/2:
-        edge_case = True
-    else:
-        k = np.tan(angle)
-        n = location[1] - k*location[0]
-    
-    vx = np.sign(np.round(np.cos(angle), RND))
-    vy = np.sign(np.round(np.sin(angle), RND))
-    start_block = block_i - 2 if block_i > 2 else 0
-    finish_block = block_i + 3 if block_i + 3 < len(blocks) else len(blocks)
-    shortest_distance = 100
-    best_intersection = [0,0]
-    for i in range(start_block, finish_block):
-        block = blocks[i]
-        for j in range(len(block[0])-1):
-            if (block[0][j+1]-block[0][j]) == 0:
-                if edge_case:
-                    continue
-                intersection = [block[0][j+1], block[0][j+1]*k+n]
-            else:
-                k1 = (block[1][j+1]-block[1][j])/(block[0][j+1]-block[0][j])
-                n1 = block[1][j+1] - k1*block[0][j+1]
-                if edge_case:
-                    intersection = [location[0], k1*location[0]+n1]
-                else:
-                    intersection = [(n1-n)/(k-k1),0]
-                    intersection[1] = k*intersection[0] + n
-            dx = np.sign(intersection[0] - block[0][j]) * np.sign(intersection[0] - block[0][j+1])
-            dy = np.sign(intersection[1] - block[1][j]) * np.sign(intersection[1] - block[1][j+1])
-            if dx <= 0 and dy <= 0:
-                vx1 = np.sign(intersection[0] - location[0])
-                vy1 = np.sign(intersection[1] - location[1])
-                if vx == vx1 and vy == vy1:
-                    distance = np.sqrt((intersection[0]-location[0])**2 + (intersection[1]-location[1])**2)
-                    if distance < shortest_distance:
-                        shortest_distance = distance
-                        best_intersection = intersection
-        for j in range(len(block[0])-1):
-            if (block[2][j+1]-block[2][j]) == 0:
-                if edge_case:
-                    continue
-                intersection = [block[2][j+1], block[2][j+1]*k+n]
-            else:
-                k1 = (block[3][j+1]-block[3][j])/(block[2][j+1]-block[2][j])
-                n1 = block[3][j+1] - k1*block[2][j+1]
-                if edge_case:
-                    intersection = [location[0], k1*location[0]+n1]
-                else:
-                    intersection = [(n1-n)/(k-k1),0]
-                    intersection[1] = k*intersection[0] + n
-            dx = np.sign(intersection[0] - block[2][j]) * np.sign(intersection[0] - block[2][j+1])
-            dy = np.sign(intersection[1] - block[3][j]) * np.sign(intersection[1] - block[3][j+1])
-            if dx <= 0 and dy <= 0:
-                vx1 = np.sign(intersection[0] - location[0])
-                vy1 = np.sign(intersection[1] - location[1])
-                if vx == vx1 and vy == vy1:
-                    distance = np.sqrt((intersection[0]-location[0])**2 + (intersection[1]-location[1])**2)
-                    if distance < shortest_distance:
-                        shortest_distance = distance
-                        best_intersection = intersection
-    return [best_intersection, shortest_distance]
-
-
-  def step(self, action):
-    self.previous_stopwatch = self.stopwatch
-    self.stopwatch = time() - self.timer
-    self.done = bool(self.data['finish'])
-    reward = (self.previous_stopwatch - self.stopwatch)*100
-    #if self.done:
-    if self.stopwatch > TIME: # drive for 15 sec
-      self.done = True
-    
-    new_location = np.round([self.data['x'], self.data['z']], RND)
-    if np.abs(new_location-self.location).sum() >= 1:
-      self.previous_location = self.location
-      self.location = new_location
-      self.direction = self.location - self.previous_location
-    print(np.round(np.arctan(self.direction[0]/self.direction[1])/np.pi*180, RND))
-    tm_steer(action[STEER]*(-1 if self.flip else 1))
-    tm_accelerate(action[ACCELERATE]/2+0.5)
-    if self.data['speed'] < 7.0:
-      tm_brake(0.0)
-    else:
-      tm_brake(action[BRAKE]/2+0.5)
-    tm_update()
-    reward += self.move()
-    if self.flip:
-      walls = [self.measure(i)[1]/100.0 for i in [-np.pi/2, -np.pi/3, -np.pi/6, 0, np.pi/6, np.pi/3, np.pi/2]]
-    else:
-      walls = [self.measure(i)[1]/100.0 for i in [np.pi/2, np.pi/3, np.pi/6, 0, -np.pi/6, -np.pi/3, -np.pi/2]]
-    for wall in walls:
-      reward += (wall < 0.2)*WALL_REWARD
-    walls.append(normalize_speed(self.data['speed']))
-    if walls[-1] < 0.05 and walls[3] < 0.1:
-      reward -= 10000
-      self.done = True
-    return np.append(self.next_checkpoint(), walls), reward, self.done, {}
-
-  def reset(self):
-    self.done = False
-    self.flip = (np.random.rand()*2 > 1)
-    self.current_block_index = 0
-    self.current_checkpoint_index = 0
+  def respawn(self):
+    ''' reset the car and respawn '''
     tm_reset()
     tm_update()
     tm_respawn()
     sleep(1.5)
-    self.direction = self.racing_line[0][0][:-1] - np.array([(self.blocks[0][0][0]+self.blocks[0][2][1])/2, (self.blocks[0][1][0]+self.blocks[0][3][1])/2])
-    self.location = np.round([self.data['x'], self.data['z']], RND)
-    self.previous_location = np.round([self.data['x'], self.data['z']], RND)
-    if self.flip:
-      walls = [self.measure(i)[1]/100.0 for i in [-np.pi/2, -np.pi/3, -np.pi/6, 0, np.pi/6, np.pi/3, np.pi/2]]
-    else:
-      walls = [self.measure(i)[1]/100.0 for i in [np.pi/2, np.pi/3, np.pi/6, 0, -np.pi/6, -np.pi/3, -np.pi/2]]
-    walls.append(normalize_speed(self.data['speed']))
-    self.stopwatch = 0.0
-    self.previous_stopwatch = 0.0
+
     self.timer = time()
-    return np.append(self.next_checkpoint(), walls)
+    self.stopwatch = 0.0
+
+    self.update()
+
+    self.next_checkpoint = 1
+    self.previous_projection = self.location.copy()
+    #TODO: contact + previous steer
+    self.previous_steer = 0
+
+
+  def update(self):
+    ''' update the state '''
+    self.stopwatch = time() - self.timer
+    self.done = self.data['finish']
+    if self.stopwatch > TIME:
+      self.done = True
+    self.location = np.array([round(self.data['x'], FLOAT_PRECISION), round(self.data['z'], FLOAT_PRECISION)])
+    self.direction = np.array([round(self.data['dx'], FLOAT_PRECISION), round(self.data['dz'], FLOAT_PRECISION)])
+    self.angle = vector_angle(self.direction)
+    self.speed = normalize_speed(self.data['speed'])
+
+
+  def move(self):
+    ''' calculate reward '''
+    self.update()
+
+    reward = 0.0
+    θ = 0.0
+    contact = 0.0
+    
+    # next block
+    v = -self.direction*100
+    w = self.blocks[self.next_checkpoint][0:2] - self.blocks[self.next_checkpoint][2:4]
+    while not np.array_equal(vector_intersection(self.location, v, self.blocks[self.next_checkpoint][2:4], w), self.no_point):
+            reward += norm(self.centerline[self.next_checkpoint] - self.previous_projection)
+            self.previous_projection = self.centerline[self.next_checkpoint]
+            self.next_checkpoint += 1
+            w = self.blocks[self.next_checkpoint][0:2] - self.blocks[self.next_checkpoint][2:4]
+
+    # projection on the centerline
+    k = self.centerline[self.next_checkpoint][0:2]-self.centerline[self.next_checkpoint-1][0:2]
+    if k[0] == 0:
+        projection = np.array([self.centerline[self.next_checkpoint][0],self.location[1]])
+    else:
+        k = k[1]/k[0]
+        n = self.centerline[self.next_checkpoint][1] - k*self.centerline[self.next_checkpoint][0]
+        projection = (self.location[0] + k*self.location[1] - k*n)/(1+k**2)
+        projection = np.array([
+            projection,
+            projection*k + n
+        ])
+    
+    n1 = norm(self.centerline[self.next_checkpoint]-self.previous_projection)
+    n2 = norm(self.centerline[self.next_checkpoint]-projection)
+    # advancement
+    if n2 < n1:
+      reward += n1-n2
+      self.previous_projection = projection
+
+    # angle between the centerline
+    θ = vector_angle(self.centerline[self.next_checkpoint]-self.centerline[self.next_checkpoint-1]) - self.angle
+    if θ > np.pi:
+      θ -= 2*np.pi
+
+    # curvature
+    c = curvature(self.centerline, self.next_checkpoint, self.previous_projection)
+    ir = three_point_circle_inverse_radius(self.location, c[0], c[1])
+
+    # walls
+    walls = []
+    for i in [np.pi/2, np.pi/3, np.pi/6, 0, -np.pi/6, -np.pi/3, -np.pi/2]:
+      walls.append(
+        sensors(self.blocks, self.next_checkpoint, self.location, self.angle, i)[1]
+      )
+    if walls[3] < WALL_CONTACT_FRONT or \
+      min(walls[0], walls[-1]) < WALL_CONTACT_SIDE or \
+      min(walls[1], walls[2], walls[4], walls[5]) < WALL_CONTACT_WHEELS:
+
+      contact = 1.0
+
+    reward -= contact*self.speed**2*WALL_COEF
+    
+    '''
+    if self.next_checkpoint == 0:
+      # fell out of bounds
+      reward -= 10000
+      self.done = True
+    '''
+    
+    # 7 x walls, speed, θ, previous steer, wall contact, curvature
+    # inputs, reward, done, {}
+    return [np.array(walls + [self.speed, θ, self.previous_steer, contact, ir]), reward, self.done, {}]
+
+
+  def step(self, action):
+    tm_reset()
+    tm_steer(action[0])
+    if action[1] > 0:
+      tm_accelerate(action[1])
+    elif self.speed > 0.05:
+      tm_brake(-action[1])
+    tm_update()
+    self.previous_steer = action[0]
+    return tuple(self.move())
+
+
+  def reset(self):
+    self.respawn()
+    self.update()
+
+    return np.array(self.move()[0])
+
 
   def render(self, mode='human'):
     pass
+
 
   def close (self):
     pass

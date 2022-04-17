@@ -1,6 +1,5 @@
-from time import sleep
 import vgamepad as vg
-from DirectKey import PressKey, ReleaseKey, KEY_DELETE, KEY_UP, KEY_DOWN
+from DirectKey import PressKey, ReleaseKey, KEY_DELETE, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT
 
 gamepad = vg.VX360Gamepad()
 
@@ -15,7 +14,10 @@ def tm_respawn():
 
 
 def tm_accelerate(v):
-    #gamepad.right_trigger_float(value_float=v)
+    gamepad.right_trigger_float(value_float=v)
+
+
+def tm_accelerate_keyboard(v):
     if v > 0.5:
         PressKey(KEY_UP)
     else:
@@ -23,7 +25,10 @@ def tm_accelerate(v):
 
 
 def tm_brake(v):
-    #gamepad.left_trigger_float(value_float=v)
+    gamepad.left_trigger_float(value_float=v)
+    
+
+def tm_brake_keyboard(v):
     if v > 0.5:
         PressKey(KEY_DOWN)
     else:
@@ -34,12 +39,29 @@ def tm_steer(v):
     gamepad.left_joystick_float(x_value_float=v, y_value_float=0)
 
 
+def tm_steer_keyboard(v):
+    if v > 0.5:
+        ReleaseKey(KEY_LEFT)
+        PressKey(KEY_RIGHT)
+    elif v < -0.5:
+        ReleaseKey(KEY_RIGHT)
+        PressKey(KEY_LEFT)
+    else:
+        ReleaseKey(KEY_LEFT)
+        ReleaseKey(KEY_RIGHT)
+
+
 def tm_update():
     gamepad.update()
 
 
 def tm_reset():
     gamepad.reset()
+
+
+def tm_reset_keyboard():
     ReleaseKey(KEY_UP)
     ReleaseKey(KEY_DOWN)
+    ReleaseKey(KEY_RIGHT)
+    ReleaseKey(KEY_LEFT)
 
