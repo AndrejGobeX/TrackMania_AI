@@ -13,7 +13,7 @@ def train(i):
   global model
   while i:
     i-=1
-    model.learn(total_timesteps=3000, reset_num_timesteps=False)
+    model.learn(total_timesteps=1000, reset_num_timesteps=False)
     model.save('./RL_Models/sac_neo.zip')
 
 #model = SAC.load('./RL_Models/sac_neo.zip', verbose=2, learning_rate=0.0003)

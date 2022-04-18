@@ -180,6 +180,7 @@ class TMEnv(gym.Env):
     # env setup
     self.map_path = map_path
     self.no_point = np.array([-1, -1])
+    self.flip = True
 
     # get blocks of the map
     self.blocks = get_map_data(map_path)
@@ -219,6 +220,7 @@ class TMEnv(gym.Env):
     self.previous_projection = self.location.copy()
     #TODO: contact + previous steer
     self.previous_steer = 0
+    self.flip = not self.flip
 
 
   def update(self):
@@ -274,6 +276,8 @@ class TMEnv(gym.Env):
     θ = vector_angle(self.centerline[self.next_checkpoint]-self.centerline[self.next_checkpoint-1]) - self.angle
     if θ > np.pi:
       θ -= 2*np.pi
+    if self.flip:
+      θ = -θ
 
     # curvature
     c = curvature(self.centerline, self.next_checkpoint, self.previous_projection)
@@ -282,6 +286,8 @@ class TMEnv(gym.Env):
     # walls
     walls = []
     for i in [np.pi/2, np.pi/3, np.pi/6, 0, -np.pi/6, -np.pi/3, -np.pi/2]:
+      if self.flip:
+        i = -i
       walls.append(
         sensors(self.blocks, self.next_checkpoint, self.location, self.angle, i)[1]
       )
@@ -307,13 +313,15 @@ class TMEnv(gym.Env):
 
   def step(self, action):
     tm_reset()
+    self.previous_steer = action[0]
+    if self.flip:
+      action[0] = -action[0]
     tm_steer(action[0])
     if action[1] > 0:
       tm_accelerate(action[1])
     elif self.speed > 0.05:
       tm_brake(-action[1])
     tm_update()
-    self.previous_steer = action[0]
     return tuple(self.move())
 
 
