@@ -6,6 +6,8 @@
 *.mp4
 *.pdf
 *.svg
+*.png
+*.gif
 images/no/*.jpg
 images/*.jpg
 Test.py
@@ -13,3 +15,5 @@ Test.py
 NEAT/visualize.py
 *.gv
 vgamepadtest.py
+*.tflite
+MapExtractor/*

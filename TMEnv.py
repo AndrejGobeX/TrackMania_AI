@@ -16,10 +16,11 @@ BRAKE = 2
 FLOAT_PRECISION = 3
 
 TIME = 20.0
-WALL_CONTACT_FRONT = 5.5
-WALL_CONTACT_WHEELS = 5.0
-WALL_CONTACT_SIDE = 4.5
-WALL_COEF = 300
+WALL_CONTACT_FRONT = 5.75/100.0
+WALL_CONTACT_WHEELS = 5.75/100.0
+WALL_CONTACT_SIDE = 4.5/100.0
+WALL_COEF = 800
+WALL_PENALTY = 1
 
 # util functions
 def cross_product(x, y):
@@ -45,7 +46,10 @@ def vector_intersection(p, r, q, s):
 
 
 def vector_angle(r):
-    v = r[0]/norm(r)
+    n = norm(r)
+    if n == 0.0:
+      return 0.0
+    v = r[0]/n
     θ = np.arccos(v)
     if r[1] < 0:
       θ *= -1
@@ -201,6 +205,9 @@ class TMEnv(gym.Env):
 
     sleep(0.2) # wait for connection
 
+    self.speed = 0.0
+
+    self.rspwn = True
     self.respawn()
 
 
@@ -208,30 +215,34 @@ class TMEnv(gym.Env):
     ''' reset the car and respawn '''
     tm_reset()
     tm_update()
-    tm_respawn()
-    sleep(1.5)
+    if self.rspwn:
+      tm_respawn()
+      sleep(1.5)
 
     self.timer = time()
     self.stopwatch = 0.0
 
     self.update()
 
-    self.next_checkpoint = 1
-    self.previous_projection = self.location.copy()
-    #TODO: contact + previous steer
+    if self.rspwn:
+      self.next_checkpoint = 1
+      self.previous_projection = self.location.copy()
+      self.rspwn = False
+      self.flip = not self.flip
+      print("Flipped: ", self.flip)
     self.previous_steer = 0
-    self.flip = not self.flip
 
 
   def update(self):
     ''' update the state '''
     self.stopwatch = time() - self.timer
-    self.done = self.data['finish']
+    self.done = bool(self.data['finish'])
     if self.stopwatch > TIME:
       self.done = True
     self.location = np.array([round(self.data['x'], FLOAT_PRECISION), round(self.data['z'], FLOAT_PRECISION)])
     self.direction = np.array([round(self.data['dx'], FLOAT_PRECISION), round(self.data['dz'], FLOAT_PRECISION)])
     self.angle = vector_angle(self.direction)
+    self.previous_speed = self.speed
     self.speed = normalize_speed(self.data['speed'])
 
 
@@ -239,7 +250,7 @@ class TMEnv(gym.Env):
     ''' calculate reward '''
     self.update()
 
-    reward = 0.0
+    reward = -1.0
     θ = 0.0
     contact = 0.0
     
@@ -289,15 +300,19 @@ class TMEnv(gym.Env):
       if self.flip:
         i = -i
       walls.append(
-        sensors(self.blocks, self.next_checkpoint, self.location, self.angle, i)[1]
+        sensors(self.blocks, self.next_checkpoint, self.location, self.angle, i)[1]/100.0
       )
     if walls[3] < WALL_CONTACT_FRONT or \
       min(walls[0], walls[-1]) < WALL_CONTACT_SIDE or \
       min(walls[1], walls[2], walls[4], walls[5]) < WALL_CONTACT_WHEELS:
 
       contact = 1.0
-
-    reward -= contact*self.speed**2*WALL_COEF
+      reward -= contact*self.previous_speed**2*WALL_COEF + WALL_PENALTY
+      self.rspwn = True
+    elif self.speed < 0.005:
+      self.rspwn = True
+    else:
+      self.rspwn = False
     
     '''
     if self.next_checkpoint == 0:
@@ -308,7 +323,7 @@ class TMEnv(gym.Env):
     
     # 7 x walls, speed, θ, previous steer, wall contact, curvature
     # inputs, reward, done, {}
-    return [np.array(walls + [self.speed, θ, self.previous_steer, contact, ir]), reward, self.done, {}]
+    return [np.array(walls + [self.speed, θ, self.previous_steer, contact, ir], dtype=np.float32), reward, self.done, {}]
 
 
   def step(self, action):
@@ -317,8 +332,8 @@ class TMEnv(gym.Env):
     if self.flip:
       action[0] = -action[0]
     tm_steer(action[0])
-    if action[1] > 0:
-      tm_accelerate(action[1])
+    if action[1] > 0.2:
+      tm_accelerate(1)
     elif self.speed > 0.05:
       tm_brake(-action[1])
     tm_update()
@@ -326,6 +341,7 @@ class TMEnv(gym.Env):
 
 
   def reset(self):
+    self.rspwn |= bool(self.data['finish'])
     self.respawn()
     self.update()
 
