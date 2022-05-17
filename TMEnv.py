@@ -15,7 +15,8 @@ ACCELERATE = 1
 BRAKE = 2
 FLOAT_PRECISION = 3
 
-TIME = 20.0
+TIME = 120.0
+TIME_START = 3.0
 WALL_CONTACT_FRONT = 5.75/100.0
 WALL_CONTACT_WHEELS = 5.75/100.0
 WALL_CONTACT_SIDE = 4.5/100.0
@@ -207,7 +208,6 @@ class TMEnv(gym.Env):
 
     self.speed = 0.0
 
-    self.rspwn = True
     self.respawn()
 
 
@@ -215,28 +215,27 @@ class TMEnv(gym.Env):
     ''' reset the car and respawn '''
     tm_reset()
     tm_update()
-    if self.rspwn:
-      tm_respawn()
-      sleep(1.5)
+    tm_respawn()
+    sleep(1.5)
 
     self.timer = time()
     self.stopwatch = 0.0
 
     self.update()
 
-    if self.rspwn:
-      self.next_checkpoint = 1
-      self.previous_projection = self.location.copy()
-      self.rspwn = False
-      self.flip = not self.flip
-      print("Flipped: ", self.flip)
+    self.next_checkpoint = 1
+    self.previous_projection = self.location.copy()
+    self.flip = not self.flip
+    print("Flipped: ", self.flip)
     self.previous_steer = 0
 
 
   def update(self):
     ''' update the state '''
     self.stopwatch = time() - self.timer
+    reward = 0.0
     self.done = bool(self.data['finish'])
+    if self.done: reward = 1000.0
     if self.stopwatch > TIME:
       self.done = True
     self.location = np.array([round(self.data['x'], FLOAT_PRECISION), round(self.data['z'], FLOAT_PRECISION)])
@@ -244,13 +243,12 @@ class TMEnv(gym.Env):
     self.angle = vector_angle(self.direction)
     self.previous_speed = self.speed
     self.speed = normalize_speed(self.data['speed'])
+    return reward
 
 
   def move(self):
     ''' calculate reward '''
-    self.update()
-
-    reward = -1.0
+    reward = self.update() #- 1.0
     θ = 0.0
     contact = 0.0
     
@@ -308,11 +306,8 @@ class TMEnv(gym.Env):
 
       contact = 1.0
       reward -= contact*self.previous_speed**2*WALL_COEF + WALL_PENALTY
-      self.rspwn = True
-    elif self.speed < 0.005:
-      self.rspwn = True
-    else:
-      self.rspwn = False
+    if self.speed < 0.005 and self.stopwatch > TIME_START:
+      self.done = True
     
     '''
     if self.next_checkpoint == 0:
@@ -341,9 +336,7 @@ class TMEnv(gym.Env):
 
 
   def reset(self):
-    self.rspwn |= bool(self.data['finish'])
     self.respawn()
-    self.update()
 
     return np.array(self.move()[0])
 
