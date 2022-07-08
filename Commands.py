@@ -1,5 +1,5 @@
 import vgamepad as vg
-from DirectKey import PressKey, ReleaseKey, KEY_DELETE, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT
+from DirectKey import PressKey, ReleaseKey, KEY_DELETE, KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT, KEY_ENTER
 
 gamepad = vg.VX360Gamepad()
 
@@ -9,6 +9,10 @@ gamepad = vg.VX360Gamepad()
 
 
 def tm_respawn():
+    PressKey(KEY_DELETE)
+    ReleaseKey(KEY_DELETE)
+    PressKey(KEY_ENTER)
+    ReleaseKey(KEY_ENTER)
     PressKey(KEY_DELETE)
     ReleaseKey(KEY_DELETE)
 

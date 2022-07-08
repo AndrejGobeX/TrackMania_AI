@@ -13,6 +13,7 @@ KEY_DOWN = 0xD0
 KEY_LEFT = 0xCB
 KEY_RIGHT = 0xCD
 KEY_DELETE = 0xD3
+KEY_ENTER = 0x1C
 
 class KeyBdInput(ctypes.Structure):
     _fields_ = [("wVk", ctypes.c_ushort),
