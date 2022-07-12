@@ -1,5 +1,5 @@
 # SAC StableBaselines3 trainer
-# python SAC_Trainer.py path_to_processed_map run_name --no-replay
+# python SAC_Trainer.py path_to_processed_map run_name --no-replay --reset
 import os
 from termcolor import colored
 import numpy as np
@@ -21,7 +21,7 @@ class SaveReplayBufferCallback(BaseCallback):
         if self.n_calls % self.save_freq == 0:
             print("Saving replay buffer to " + self.save_path)
             self.model.save_replay_buffer(self.save_path)
-            print(colored("\nEvaluation", "blue"))
+            print(colored("Evaluation", "blue"))
         return True
 
 
@@ -33,12 +33,15 @@ replay_buffer_path = os.path.join(path, "replay_buffer.pkl")
 best_model_path = os.path.join(log_path, "best_model.zip")
 run_name = "first_run"
 load_replay = True
+reset_timesteps = False
 
 # parameters
 if len(sys.argv) >= 3:
     run_name = sys.argv[2]
 if len(sys.argv) >= 4:
     load_replay = False
+if len(sys.argv) >= 5:
+    reset_timesteps = True
 
 # envs
 eval_env = Monitor(TMEnv(sys.argv[1]))
@@ -46,7 +49,7 @@ env = eval_env
 
 # callbacks
 checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=log_path, name_prefix='SAC')
-eval_callback = EvalCallback(eval_env=eval_env, best_model_save_path=log_path, eval_freq=1000, n_eval_episodes=2)
+eval_callback = EvalCallback(eval_env=eval_env, best_model_save_path=log_path, eval_freq=1000)
 save_replay_buffer_callback = SaveReplayBufferCallback(save_path=replay_buffer_path, save_freq=1000)
 callbacks = [save_replay_buffer_callback, checkpoint_callback, eval_callback]
 
@@ -67,7 +70,7 @@ else:
 if os.path.exists(replay_buffer_path) and load_replay:
     model.load_replay_buffer(replay_buffer_path)
 
-model.learn(total_timesteps=100000, tb_log_name=run_name, reset_num_timesteps=False, callback=callbacks)
+model.learn(total_timesteps=100000, tb_log_name=run_name, reset_num_timesteps=reset_timesteps, callback=callbacks)
 
 obs = env.reset()
 episode_reward = 0.0

@@ -15,12 +15,14 @@ ACCELERATE = 1
 BRAKE = 2
 FLOAT_PRECISION = 3
 
-TIME = 20.0
+TIME = 10000000.0
+TIME_START = 3.0
 WALL_CONTACT_FRONT = 5.75/100.0
 WALL_CONTACT_WHEELS = 5.75/100.0
 WALL_CONTACT_SIDE = 4.5/100.0
 WALL_COEF = 800
 WALL_PENALTY = 1
+GAMMA_ADJUSTMENT = -math.log(0.01)/60.0
 
 # util functions
 def cross_product(x, y):
@@ -63,6 +65,8 @@ def three_point_circle_inverse_radius(A, B, C):
   C2 = C[0]**2 + C[1]**2
   #D=2[Ax(By−Cy)+Bx(Cy−Ay)+Cx(Ay−By)]
   D=2*(B[0]*C[1] - C[0]*B[1])
+  if D == 0.0:
+    return 0.0
   #Rx=[(Ax**2+Ay**2)(By−Cy)+(Bx**2+By**2)(Cy−Ay)+(Cx**2+Cy**2)(Ay−By)]/D
   Rx=(B2*C[1] - C2*B[1])/D
   #Ry=[(Ax**2+Ay**2)(Cx−Bx)+(Bx**2+By**2)(Ax−Cx)+(Cx**2+Cy**2)(Bx−Ax)]/D
@@ -185,12 +189,17 @@ class TMEnv(gym.Env):
     self.map_path = map_path
     self.no_point = np.array([-1, -1])
     self.flip = True
+    self.previous_step = time()
 
     # get blocks of the map
     self.blocks = get_map_data(map_path)
     self.centerline = [
       (np.array([self.blocks[i][0], self.blocks[i][1]]) + np.array([self.blocks[i][2], self.blocks[i][3]]))/2
-      for i in range(len(self.blocks))] # x, y, time
+      for i in range(len(self.blocks))] # x, y
+    self.track_length = 0
+    for i in range(len(self.centerline)-2):
+      self.track_length += norm(self.centerline[i]-self.centerline[i+1])
+    print("Track centerline length: "+str(self.track_length))
 
     # function that captures data from openplanet    
     def data_getter_function():
@@ -217,7 +226,7 @@ class TMEnv(gym.Env):
     tm_update()
     if self.rspwn:
       tm_respawn()
-      sleep(1.5)
+      sleep(1.8)
 
     self.timer = time()
     self.stopwatch = 0.0
@@ -228,15 +237,19 @@ class TMEnv(gym.Env):
       self.next_checkpoint = 1
       self.previous_projection = self.location.copy()
       self.rspwn = False
-      self.flip = not self.flip
-      print("Flipped: ", self.flip)
-    self.previous_steer = 0
+      self.previous_steer = 0
+
+    self.previous_steer = -self.previous_steer  
+    self.flip = not self.flip
+    print("Flipped: ", self.flip)
 
 
   def update(self):
     ''' update the state '''
     self.stopwatch = time() - self.timer
+    reward = 0.0
     self.done = bool(self.data['finish'])
+    if self.done: reward = 1000.0
     if self.stopwatch > TIME:
       self.done = True
     self.location = np.array([round(self.data['x'], FLOAT_PRECISION), round(self.data['z'], FLOAT_PRECISION)])
@@ -244,13 +257,12 @@ class TMEnv(gym.Env):
     self.angle = vector_angle(self.direction)
     self.previous_speed = self.speed
     self.speed = normalize_speed(self.data['speed'])
+    return reward
 
 
   def move(self):
     ''' calculate reward '''
-    self.update()
-
-    reward = -1.0
+    reward = self.update() #- 1.0
     θ = 0.0
     contact = 0.0
     
@@ -261,6 +273,10 @@ class TMEnv(gym.Env):
             reward += norm(self.centerline[self.next_checkpoint] - self.previous_projection)
             self.previous_projection = self.centerline[self.next_checkpoint]
             self.next_checkpoint += 1
+            if self.next_checkpoint >= len(self.centerline):
+              self.next_checkpoint = 1
+              self.done = True
+              self.rspwn = True
             w = self.blocks[self.next_checkpoint][0:2] - self.blocks[self.next_checkpoint][2:4]
 
     # projection on the centerline
@@ -282,6 +298,9 @@ class TMEnv(gym.Env):
     if n2 < n1:
       reward += n1-n2
       self.previous_projection = projection
+
+    # gamma
+    reward *= math.e ** (-self.stopwatch*GAMMA_ADJUSTMENT)
 
     # angle between the centerline
     θ = vector_angle(self.centerline[self.next_checkpoint]-self.centerline[self.next_checkpoint-1]) - self.angle
@@ -308,11 +327,9 @@ class TMEnv(gym.Env):
 
       contact = 1.0
       reward -= contact*self.previous_speed**2*WALL_COEF + WALL_PENALTY
-      self.rspwn = True
-    elif self.speed < 0.005:
-      self.rspwn = True
-    else:
-      self.rspwn = False
+
+    if self.speed < 0.005 and self.stopwatch > TIME_START:
+      self.rspwn = self.done = True
     
     '''
     if self.next_checkpoint == 0:
@@ -327,6 +344,8 @@ class TMEnv(gym.Env):
 
 
   def step(self, action):
+    print("Step diff(s): ", time() - self.previous_step)
+    self.previous_step = time()
     tm_reset()
     self.previous_steer = action[0]
     if self.flip:
@@ -341,6 +360,7 @@ class TMEnv(gym.Env):
 
 
   def reset(self):
+    self.previous_step = time()
     self.rspwn |= bool(self.data['finish'])
     self.respawn()
     self.update()
