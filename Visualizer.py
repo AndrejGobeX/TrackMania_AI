@@ -7,6 +7,7 @@ import cv2
 from Screenshot import screenshot
 import sys
 import numpy as np
+from time import time
 
 
 def perspective_warp(img):
@@ -23,24 +24,55 @@ def perspective_warp(img):
 
     return dst
 
+def color_quantization(img, K):
+    Z = img.reshape((-1,3))
+    
+    # convert to np.float32
+    Z = np.float32(Z)
+    
+    # define criteria, number of clusters(K) and apply kmeans()
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    ret,label,center=cv2.kmeans(Z, K, None, criteria, 20, cv2.KMEANS_RANDOM_CENTERS)
+    
+    # Now convert back into uint8, and make original image
+    center = np.uint8(center)
+    res = center[label.flatten()]
+    return res.reshape((img.shape))
 
-def fun():
-    return
+from Window import WindowInterface
 
+#window = WindowInterface()
+#window.move_and_resize()
 
-if len(sys.argv) < 3:
-    print('Not enough arguments.')
-    exit()
+lower = np.array([0,0,0], dtype = "uint8")
+upper = np.array([180,255,40], dtype = "uint8")
 
-width = int(sys.argv[1])
-height = int(sys.argv[2])
-
-lower_gray = np.array([0, 5, 50], np.uint8)
-upper_gray = np.array([20, 5, 50], np.uint8)
+#cv2.imwrite("prev.png", window.screenshot())
+img = cv2.imread("prev.png")
 
 while(True):
 
-    frame = screenshot(w=width, h=height)
+    #frame = screenshot()
+    #frame = window.screenshot()
+    #frame = cv2.cvtColor(window.screenshot(), cv2.COLOR_BGRA2BGR)
+    frame = img.copy()
+    
+    start = time()
+    frame = frame[225:][:-40]
+    frame = cv2.resize(frame, (200, 100))
+    frame = cv2.Canny(frame, 100, 50)
+    #frame[:,:,0]=0
+    #frame[:,:,1]=0
+    #frame = color_quantization(frame, 4)
+    print(time() - start)
+
+    #mask = cv2.inRange(frame, lower, upper)
+    #frame = cv2.Canny(mask, 100, 150)
+
+    #print(frame.shape)
+    
+    
+    #frame = cv2.Canny(frame, 100, 200)
   
     cv2.imshow('frame', frame)
 
