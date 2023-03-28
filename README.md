@@ -53,7 +53,7 @@ As mentioned in the issues, Openplanet won't load the plugin if run from EpicGam
 1. Download Trackmania and Python with all the necessary packages (package info below).
 2. Download Openplanet and install it.
 3. Git clone this repository.
-3. Copy the `Plugin*` (version 0.2 has added direction support) files from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Scripts`. (If there is no `Scripts` directory in `OpenplanetNext`, run Trackmania and exit it)
+3. Copy the `TMRL_GrabDataExt.op` (Ext version has added direction support) file from `Scripts\` directory to `C:\Users\(username)\OpenplanetNext\Plugins`. (If there is no `Plugins` directory in `OpenplanetNext`, run Trackmania and exit it)
 4. Run Trackmania, press `F3` to open Openplanet, go to Openplanet > Log and check if the script is running (should print Waiting for incomming connection). You can, if necessary, reload the plugin from Developer > Reload plugin. Open any map (nets are trained on basic circuits, so the best thing is to create a new one), and enter driving mode. Press `F3` again to close the openplanet overlay (scripts capture full-screen and overlays will mess them up).
 5. Alt-tab or press Win key and open command prompt.
     * If using supervised nets:
