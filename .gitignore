@@ -11,19 +11,4 @@
 *.gv
 *.tflite
 
-images/no/*.jpg
-images/*.jpg
-
 .idea/*
-NEAT/visualize.py
-
-MapExtractor/*
-
-RL_Models/sac_neo_rb.pkl
-
-vgamepadtest.py
-GPS*.py
-Test.py
-NEAT_Driver.py
-TMEnv*.py
-SAC*

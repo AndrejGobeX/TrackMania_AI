@@ -61,12 +61,15 @@ class WindowInterface:
         win32gui.MoveWindow(hwnd, x, y, w, h, True)
 
 
-def profile_screenshot():
-    from pyinstrument import Profiler
-    pro = Profiler()
-    window_interface = WindowInterface("Trackmania")
-    pro.start()
-    for _ in range(5000):
-        snap = window_interface.screenshot()
-    pro.stop()
-    pro.print(show_all=True)
+# def profile_screenshot():
+#     from pyinstrument import Profiler
+#     pro = Profiler()
+#     window_interface = WindowInterface("Trackmania")
+#     pro.start()
+#     for _ in range(5000):
+#         snap = window_interface.screenshot()
+#     pro.stop()
+#     pro.print(show_all=True)
+
+if __name__ == "__main__":
+    pass
