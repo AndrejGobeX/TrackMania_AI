@@ -2,6 +2,7 @@ import gym
 from gym import spaces
 
 import numpy as np
+import cv2
 import math
 import time
 
@@ -21,10 +22,10 @@ from Window import WindowInterface
 from Lidar import Lidar
 
 
-class TrackmaniaEnv(gym.Env):
+class TMImageEnv(gym.Env):
 
 
-  def __init__(self, map_path:str, obs_history:int=1, action_history:int=2, human_driver=False):
+  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, human_driver=False):
     """Gym(nasium) compatible env for imitation/reinforcement learning in Trackmania.
 
     ### Parameters
@@ -55,19 +56,25 @@ class TrackmaniaEnv(gym.Env):
 
     # *** OBSERVATION SPACE ***
     
-    self.observation_space = spaces.Box(
-      np.array(
-        [-1, -1]*(self.obs_history+self.action_history) + \
-        [0]*20*(self.obs_history+1),
-        
-        dtype=np.float32
-      ),
-      np.array(
-        [1, 1]*(self.obs_history+self.action_history) + \
-        [1]*20*(self.obs_history+1),
-        
-        dtype=np.float32
+    self.observation_space = spaces.Dict({})
+
+    for i in range(self.obs_history+1):
+      self.observation_space['view_'+str(i)] = spaces.Box(
+        low=0, high=255, shape=(100,100,3), dtype=np.uint8
       )
+    
+    self.observation_space['speed'] = spaces.Box(
+      np.array([0]*(self.obs_history+1)),
+      np.array([1]*(self.obs_history+1)),
+
+      dtype=np.float32
+    )
+
+    self.observation_space['prev'] = spaces.Box(
+      np.array([[-1,-1]]*(self.obs_history+self.action_history)),
+      np.array([[1,1]]*(self.obs_history+self.action_history)),
+
+      dtype=np.float32
     )
 
     # *** SETUP ***
@@ -100,16 +107,15 @@ class TrackmaniaEnv(gym.Env):
     self.lidar = Lidar(self.window.screenshot())
 
     # obs buffer
-    self.obs_buffer = np.array(
-      [0, 0]*(self.obs_history+self.action_history) + \
-      [0]*20*(self.obs_history+1),
+    self.view_buffer = np.zeros((self.obs_history+1, 100, 100, 3), dtype=np.uint8)
+    self.speed_buffer = np.zeros((self.obs_history+1), dtype=np.float32)
+    self.prev_action_buffer = np.zeros((self.obs_history+self.action_history, 2), np.float32)
 
-      dtype=np.float32
-    )
-    self.view_buffer = self.obs_buffer[2*(self.obs_history+self.action_history) + self.obs_history + 1:]
-    self.speed_buffer = self.obs_buffer[2*(self.obs_history+self.action_history):
-      2*(self.obs_history+self.action_history) + self.obs_history + 1]
-    self.prev_action_buffer = self.obs_buffer[:2*(self.obs_history+self.action_history)]
+    self.obs_dict = dict({})
+    for i in range(self.obs_history+1):
+      self.obs_dict['view_'+str(i)] = self.view_buffer[i]
+    self.obs_dict['speed'] = self.speed_buffer
+    self.obs_dict['prev'] = self.prev_action_buffer
 
   # *** GAME MANIP ***
 
@@ -139,16 +145,15 @@ class TrackmaniaEnv(gym.Env):
     """Obtains the observation and updates the buffer.
     """
     # overwrite
-    self.view_buffer[:-19] = self.view_buffer[19:]
+    self.view_buffer[:-1] = self.view_buffer[1:]
     self.speed_buffer[:-1] = self.speed_buffer[1:]
     
     # add new
-    view = self.window.screenshot()
-    view = self.lidar.lidar_20(view) / \
-      math.hypot(self.lidar.road_point[0], self.lidar.road_point[1])
+    view = cv2.cvtColor(self.window.screenshot(), cv2.COLOR_RGBA2RGB)
+    view = cv2.resize(view, (100,100))
     if self.flip:
-      view = np.flip(view)
-    self.view_buffer[-19:] = view
+      view = np.flip(view, axis=1)
+    self.view_buffer[-1] = view
 
     speed = self.data_getter.game_data[
       GameDataGetter.I_SPEED
@@ -164,10 +169,10 @@ class TrackmaniaEnv(gym.Env):
         Array of two floats [-1,1] indicating, respectively, steering and throttle/braking.
     """
     # overwrite
-    self.prev_action_buffer[:-2] = self.prev_action_buffer[2:]
+    self.prev_action_buffer[:-1] = self.prev_action_buffer[1:]
     
     # add new
-    self.prev_action_buffer[-2:] = action
+    self.prev_action_buffer[-1:] = action
 
     if self.flip:
       action[0] = -action[0]
@@ -194,7 +199,7 @@ class TrackmaniaEnv(gym.Env):
 
 
   def vector_angle(r):
-    n = TrackmaniaEnv.norm(r)
+    n = TMImageEnv.norm(r)
     if n == 0.0:
       return 0.0
     v = r[0]/n
@@ -205,10 +210,10 @@ class TrackmaniaEnv(gym.Env):
 
 
   def vector_intersection(p, r, q, s):
-    rxs = TrackmaniaEnv.cross_product(r, s)
+    rxs = TMImageEnv.cross_product(r, s)
     qmp = q - p
-    qpxs = TrackmaniaEnv.cross_product(qmp, s)
-    qpxr = TrackmaniaEnv.cross_product(qmp, r)
+    qpxs = TMImageEnv.cross_product(qmp, s)
+    qpxr = TMImageEnv.cross_product(qmp, r)
     if rxs == 0:
       return None
     t = qpxs/rxs
@@ -232,8 +237,8 @@ class TrackmaniaEnv(gym.Env):
     
     v = -self.direction*100
 
-    d_angle = abs(TrackmaniaEnv.vector_angle(self.map_centerline[self.next_checkpoint] - self.map_centerline[self.next_checkpoint-1]) - \
-      TrackmaniaEnv.vector_angle(-v))
+    d_angle = abs(TMImageEnv.vector_angle(self.map_centerline[self.next_checkpoint] - self.map_centerline[self.next_checkpoint-1]) - \
+      TMImageEnv.vector_angle(-v))
     
     if d_angle > math.pi:
       d_angle = 2*math.pi - d_angle
@@ -243,13 +248,13 @@ class TrackmaniaEnv(gym.Env):
       return -100
 
     w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
-    while not TrackmaniaEnv.vector_intersection(
+    while not TMImageEnv.vector_intersection(
       self.location,
       v,
       self.map[self.next_checkpoint][2:4],
       w
       ) is None:
-            centerline_distance += TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint] - self.prev_projection)
+            centerline_distance += TMImageEnv.norm(self.map_centerline[self.next_checkpoint] - self.prev_projection)
             self.prev_projection = self.map_centerline[self.next_checkpoint]
             self.next_checkpoint += 1
             if self.next_checkpoint >= len(self.map_centerline):
@@ -270,8 +275,8 @@ class TrackmaniaEnv(gym.Env):
             projection*k + n
         ])
     
-    n1 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-self.prev_projection)
-    n2 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-projection)
+    n1 = TMImageEnv.norm(self.map_centerline[self.next_checkpoint]-self.prev_projection)
+    n2 = TMImageEnv.norm(self.map_centerline[self.next_checkpoint]-projection)
     # advancement
     if n2 < n1:
       centerline_distance += n1-n2
@@ -281,6 +286,7 @@ class TrackmaniaEnv(gym.Env):
 
 
   def reset(self):
+    self.prev_time = time.time()
     if self.rspwn or self.data_getter.game_data[
       GameDataGetter.I_SPEED
     ] * 3.6 < 2.0 or self.data_getter.game_data[
@@ -289,10 +295,12 @@ class TrackmaniaEnv(gym.Env):
       self.rspwn = False
       self.respawn()
 
-    return self.obs_buffer
+    return self.obs_dict
 
 
   def step(self, action):
+    print(time.time() - self.prev_time)
+    self.prev_time = time.time()
     self.apply_action(action)
     self.refresh_observation()
     reward = self.calc_reward()
@@ -303,4 +311,4 @@ class TrackmaniaEnv(gym.Env):
       self.rspwn = False
       self.respawn()
     
-    return self.obs_buffer, reward, False, {}
+    return self.obs_dict, reward, False, {}

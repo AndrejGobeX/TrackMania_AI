@@ -5,8 +5,6 @@ from gym.wrappers import TimeLimit
 from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
 
-from imitation.data.types import TrajectoryWithRew
-
 import keyboard
 
 from TrackmaniaEnv import TrackmaniaEnv
@@ -22,6 +20,19 @@ env = TrackmaniaEnv('./Maps/TurboTrack.Map.txt', human_driver=True)
 #check_env(env)
 envT = TimeLimit(env, max_episode_steps=MAX_EPISODE_STEPS)
 model = SAC("MlpPolicy", envT, buffer_size=BUFFER_SIZE, verbose=1)
+
+# # *** BNCHMRK ***
+# obs = envT.reset()
+# done = False
+# total = 0.0
+# cnt = 0
+# while not done:
+#     start = time.time()
+#     obs, reward, done, info = envT.step(model.predict(obs)[0])
+#     total += time.time() - start
+#     cnt += 1
+# print(total/cnt)
+# exit()
 
 # *** RUN ***
 for i in range(NUMBER_EPISODES):
@@ -61,13 +72,3 @@ for i in range(NUMBER_EPISODES):
         #print(env.next_checkpoint)
 
     np.savez('Trajectories/trajectory_' + str(int(time.time())) + '_' + crash, obs=observations, act=actions, inf=infos, rews=rewards)
-    
-    #trajectory = TrajectoryWithRew(
-    #np.array(observations),
-    #np.array(actions),
-    #infos=np.array(infos),
-    #terminal=True,
-    #rews=np.array(rewards)
-    #)
-
-    #print(trajectory)
