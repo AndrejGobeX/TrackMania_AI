@@ -45,6 +45,7 @@ for i in range(NUMBER_EPISODES):
     observations.append(obs)
     done = False
     crash = 'OK'
+    print(obs)
 
     while not done:
 
@@ -65,6 +66,7 @@ for i in range(NUMBER_EPISODES):
         obs, reward, done, info = envT.step(actions[-1])
 
         observations.append(obs)
+        print(reward)
         rewards.append(reward)
         
         infos.append(info)

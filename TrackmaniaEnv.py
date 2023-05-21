@@ -24,7 +24,7 @@ from Lidar import Lidar
 class TrackmaniaEnv(gym.Env):
 
 
-  def __init__(self, map_path:str, obs_history:int=1, action_history:int=2, human_driver=False):
+  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, max_steps:int=200, human_driver=False):
     """Gym(nasium) compatible env for imitation/reinforcement learning in Trackmania.
 
     ### Parameters
@@ -77,6 +77,10 @@ class TrackmaniaEnv(gym.Env):
 
     # respawning (true first time)
     self.rspwn = True
+    self.done = False
+    self.threshold_speed = False
+    self.step_counter = 0
+    self.max_steps = max_steps
 
     # human driver mode
     self.human = human_driver
@@ -86,7 +90,7 @@ class TrackmaniaEnv(gym.Env):
     self.map_centerline = self.map.reshape((-1,2,2)).sum(axis=1)/2 # x, y
     self.next_checkpoint = 1
     self.location = np.array([0,0], dtype=np.float32)
-    self.prev_location = np.array([0,0], dtype=np.float32)
+    #self.prev_location = np.array([0,0], dtype=np.float32)
     self.prev_projection = np.array([0,0], dtype=np.float32)
     self.direction = np.array([0,0], dtype=np.float32)
     self.prev_distance = 0.0
@@ -119,20 +123,19 @@ class TrackmaniaEnv(gym.Env):
     tm_reset()
     tm_update()
     tm_respawn()
-    time.sleep(0.4)
-    print("respawned")
+    time.sleep(1.5)
+
     self.next_checkpoint = 1
     self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
     self.location[1] = self.data_getter.game_data[GameDataGetter.I_Z]
-    self.prev_location[0] = self.location[0]
-    self.prev_location[1] = self.location[1]
+    #self.prev_location[0] = self.location[0]
+    #self.prev_location[1] = self.location[1]
     self.prev_projection = self.location.copy()
     self.prev_distance = 0.0
+    self.threshold_speed = False
     self.flip = not self.flip
     for i in range(self.obs_history+self.action_history+1):
       self.refresh_observation()
-    print("go")
-    #time.sleep(2)
 
 
   def refresh_observation(self):
@@ -223,8 +226,8 @@ class TrackmaniaEnv(gym.Env):
     # calc distance travelled between two steps
     centerline_distance = 0.0
 
-    self.prev_location[0] = self.location[0]
-    self.prev_location[1] = self.location[1]
+    #self.prev_location[0] = self.location[0]
+    #self.prev_location[1] = self.location[1]
     self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
     self.location[1] = self.data_getter.game_data[GameDataGetter.I_Z]
     self.direction[0] = self.data_getter.game_data[GameDataGetter.I_DX]
@@ -240,6 +243,7 @@ class TrackmaniaEnv(gym.Env):
 
     if d_angle > math.pi/2:
       self.rspwn = True
+      self.done = True
       return -100
 
     w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
@@ -255,6 +259,7 @@ class TrackmaniaEnv(gym.Env):
             if self.next_checkpoint >= len(self.map_centerline):
               self.next_checkpoint = 1
               self.rspwn = True
+              self.done = True
             w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
 
     # projection on the centerline
@@ -269,7 +274,15 @@ class TrackmaniaEnv(gym.Env):
             projection,
             projection*k + n
         ])
-    
+    # check wall contact
+    if TrackmaniaEnv.norm(self.location - projection) > 11.0:
+      centerline_distance -= 10.0
+    # check stopped
+    if self.step_counter > 10 and self.speed_buffer[-1] < 0.001:
+      centerline_distance -= 100.0
+      self.rspwn = True
+      self.done = True
+
     n1 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-self.prev_projection)
     n2 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-projection)
     # advancement
@@ -277,15 +290,15 @@ class TrackmaniaEnv(gym.Env):
       centerline_distance += n1-n2
       self.prev_projection = projection
 
+    self.done |= bool(self.data_getter.game_data[GameDataGetter.I_FINISH])
+    self.rspwn |= self.done
     return centerline_distance
 
 
   def reset(self):
-    if self.rspwn or self.data_getter.game_data[
-      GameDataGetter.I_SPEED
-    ] * 3.6 < 2.0 or self.data_getter.game_data[
-      GameDataGetter.I_FINISH
-    ]:
+    self.step_counter = 0
+    self.done = False
+    if self.rspwn:
       self.rspwn = False
       self.respawn()
 
@@ -297,10 +310,12 @@ class TrackmaniaEnv(gym.Env):
     self.refresh_observation()
     reward = self.calc_reward()
 
-    if self.rspwn or self.data_getter.game_data[
-      GameDataGetter.I_FINISH
-    ]:
-      self.rspwn = False
-      self.respawn()
+    self.step_counter += 1
+    if self.step_counter == self.max_steps:
+      self.done = True
+
+    # if self.rspwn:
+    #   self.rspwn = False
+    #   self.respawn()
     
-    return self.obs_buffer, reward, False, {}
+    return self.obs_buffer, reward, self.done, {}
