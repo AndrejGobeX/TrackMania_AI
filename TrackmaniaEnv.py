@@ -30,12 +30,14 @@ class TrackmaniaEnv(gym.Env):
     ### Parameters
     map_path : str
         Path to processed track file.
-    obs_history : int, (default 1)
+    obs_history : int, (default 0)
         Number of previous inputs to keep in the observation.
     action_history : int, (default 2)
         Number of previous actions to keep in the observation.
         The total number of previous actions will be equal to:
         obs_history + action_history
+    max_steps: int, (default 200)
+        Maximum number of timesteps before restart.
     human_driver : bool, (default False)
         If True, env will not apply any action.
     """
