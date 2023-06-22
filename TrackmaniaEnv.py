@@ -1,5 +1,4 @@
-import gym
-from gym import spaces
+from gym import Env, spaces
 
 import numpy as np
 import math
@@ -21,10 +20,10 @@ from Window import WindowInterface
 from Lidar import Lidar
 
 
-class TrackmaniaEnv(gym.Env):
+class TrackmaniaEnv(Env):
 
 
-  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, max_steps:int=200, human_driver=False):
+  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, human_driver=False):
     """Gym(nasium) compatible env for imitation/reinforcement learning in Trackmania.
 
     ### Parameters
@@ -82,7 +81,6 @@ class TrackmaniaEnv(gym.Env):
     self.done = False
     self.threshold_speed = False
     self.step_counter = 0
-    self.max_steps = max_steps
 
     # human driver mode
     self.human = human_driver
@@ -313,11 +311,16 @@ class TrackmaniaEnv(gym.Env):
     reward = self.calc_reward()
 
     self.step_counter += 1
-    if self.step_counter == self.max_steps:
-      self.done = True
 
     # if self.rspwn:
     #   self.rspwn = False
     #   self.respawn()
     
     return self.obs_buffer, reward, self.done, {}
+
+
+if __name__ == '__main__':
+  env = TrackmaniaEnv('.\\Maps\\TurboTrack.Map.txt', human_driver=True)
+  env.reset()
+  for i in range(10000):
+    env.step([0,0])
