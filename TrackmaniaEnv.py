@@ -16,14 +16,13 @@ from Commands import (
 )
 
 from GameDataGetter import GameDataGetter
-from Window import WindowInterface
-from Lidar import Lidar
+from TrackVisualizer import TrackVisualizer
 
 
 class TrackmaniaEnv(Env):
 
 
-  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, human_driver=False):
+  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, human_driver:bool=False):
     """Gym(nasium) compatible env for imitation/reinforcement learning in Trackmania.
 
     ### Parameters
@@ -42,6 +41,7 @@ class TrackmaniaEnv(Env):
     """
 
     super().__init__()
+    wall_lasers=13
 
     # *** ACTION SPACE ***
 
@@ -59,13 +59,13 @@ class TrackmaniaEnv(Env):
     self.observation_space = spaces.Box(
       np.array(
         [-1, -1]*(self.obs_history+self.action_history) + \
-        [0]*20*(self.obs_history+1),
+        [0]*(wall_lasers+1)*(self.obs_history+1),
         
         dtype=np.float32
       ),
       np.array(
         [1, 1]*(self.obs_history+self.action_history) + \
-        [1]*20*(self.obs_history+1),
+        [1]*(wall_lasers+1)*(self.obs_history+1),
         
         dtype=np.float32
       )
@@ -74,13 +74,12 @@ class TrackmaniaEnv(Env):
     # *** SETUP ***
 
     # flipping mechanism
-    self.flip = False
+    self.flip = True
 
     # respawning (true first time)
     self.rspwn = True
     self.done = False
-    self.threshold_speed = False
-    self.step_counter = 0
+    #self.threshold_speed = False
 
     # human driver mode
     self.human = human_driver
@@ -90,7 +89,6 @@ class TrackmaniaEnv(Env):
     self.map_centerline = self.map.reshape((-1,2,2)).sum(axis=1)/2 # x, y
     self.next_checkpoint = 1
     self.location = np.array([0,0], dtype=np.float32)
-    #self.prev_location = np.array([0,0], dtype=np.float32)
     self.prev_projection = np.array([0,0], dtype=np.float32)
     self.direction = np.array([0,0], dtype=np.float32)
     self.prev_distance = 0.0
@@ -98,15 +96,14 @@ class TrackmaniaEnv(Env):
     # setup Trackmania bridge
     self.data_getter = GameDataGetter(extended=True)
 
-    # setup window capture
-    self.window = WindowInterface()
-    self.window.move_and_resize()
-    self.lidar = Lidar(self.window.screenshot())
+    # setup visualizer and lidar
+    self.visualizer = TrackVisualizer(self.map)
+    self.wall_number = wall_lasers
 
     # obs buffer
     self.obs_buffer = np.array(
       [0, 0]*(self.obs_history+self.action_history) + \
-      [0]*20*(self.obs_history+1),
+      [0]*(wall_lasers+1)*(self.obs_history+1),
 
       dtype=np.float32
     )
@@ -128,30 +125,32 @@ class TrackmaniaEnv(Env):
     self.next_checkpoint = 1
     self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
     self.location[1] = self.data_getter.game_data[GameDataGetter.I_Z]
-    #self.prev_location[0] = self.location[0]
-    #self.prev_location[1] = self.location[1]
     self.prev_projection = self.location.copy()
     self.prev_distance = 0.0
-    self.threshold_speed = False
+    #self.threshold_speed = False
     self.flip = not self.flip
-    for i in range(self.obs_history+self.action_history+1):
+    for i in range(self.obs_history+self.action_history):
       self.refresh_observation()
 
 
   def refresh_observation(self):
     """Obtains the observation and updates the buffer.
     """
+    # get info from the game
+    self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
+    self.location[1] = self.data_getter.game_data[GameDataGetter.I_Z]
+    self.direction[0] = self.data_getter.game_data[GameDataGetter.I_DX]
+    self.direction[1] = self.data_getter.game_data[GameDataGetter.I_DZ]
+
     # overwrite
-    self.view_buffer[:-19] = self.view_buffer[19:]
+    self.view_buffer[:-self.wall_number] = self.view_buffer[self.wall_number:]
     self.speed_buffer[:-1] = self.speed_buffer[1:]
     
     # add new
-    view = self.window.screenshot()
-    view = self.lidar.lidar_20(view) / \
-      math.hypot(self.lidar.road_point[0], self.lidar.road_point[1])
+    view = self.visualizer.lidar(self.location, TrackmaniaEnv.vector_angle(self.direction), show=False)
     if self.flip:
       view = np.flip(view)
-    self.view_buffer[-19:] = view
+    self.view_buffer[-self.wall_number:] = view
 
     speed = self.data_getter.game_data[
       GameDataGetter.I_SPEED
@@ -201,7 +200,7 @@ class TrackmaniaEnv(Env):
     if n == 0.0:
       return 0.0
     v = r[0]/n
-    θ = np.arccos(v)
+    θ = math.acos(v)
     if r[1] < 0:
       θ *= -1
     return θ
@@ -220,32 +219,40 @@ class TrackmaniaEnv(Env):
       return p + t*r
     return None
 
+  
+  def normal_projection(a, b, p):
+    v = a - b
+    v /= TrackmaniaEnv.norm(v)
+    w = p - b
+    return b + v*(w[0]*v[0] + w[1]*v[1])
+  
   # *** ENV ESSENTIALS ***
   
   def calc_reward(self):
     # calc distance travelled between two steps
     centerline_distance = 0.0
-
-    #self.prev_location[0] = self.location[0]
-    #self.prev_location[1] = self.location[1]
-    self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
-    self.location[1] = self.data_getter.game_data[GameDataGetter.I_Z]
-    self.direction[0] = self.data_getter.game_data[GameDataGetter.I_DX]
-    self.direction[1] = self.data_getter.game_data[GameDataGetter.I_DZ]
     
+    # negative direction vector
     v = -self.direction*100
-
-    d_angle = abs(TrackmaniaEnv.vector_angle(self.map_centerline[self.next_checkpoint] - self.map_centerline[self.next_checkpoint-1]) - \
-      TrackmaniaEnv.vector_angle(-v))
     
-    if d_angle > math.pi:
-      d_angle = 2*math.pi - d_angle
+    car_angle = TrackmaniaEnv.vector_angle(-v)
+    centerline_angle = TrackmaniaEnv.vector_angle(self.map_centerline[self.next_checkpoint] - self.map_centerline[self.next_checkpoint-1])
 
-    if d_angle > math.pi/2:
+    # delta angle between centerline and direction
+    d_angle = car_angle - centerline_angle
+
+    if d_angle > math.pi: d_angle -= 2*math.pi
+    elif d_angle < -math.pi: d_angle += 2*math.pi
+
+    if abs(d_angle) > math.pi/2:
       self.rspwn = True
       self.done = True
-      return -100
+      return -500.0
+    
+    if self.flip:
+      d_angle = - d_angle
 
+    # checkpoints
     w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
     while not TrackmaniaEnv.vector_intersection(
       self.location,
@@ -263,7 +270,7 @@ class TrackmaniaEnv(Env):
             w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
 
     # projection on the centerline
-    k = self.map_centerline[self.next_checkpoint][0:2]-self.map_centerline[self.next_checkpoint-1][0:2]
+    '''k = self.map_centerline[self.next_checkpoint]-self.map_centerline[self.next_checkpoint-1]
     if k[0] == 0:
         projection = np.array([self.map_centerline[self.next_checkpoint][0],self.location[1]])
     else:
@@ -274,25 +281,31 @@ class TrackmaniaEnv(Env):
             projection,
             projection*k + n
         ])
+    '''
+    projection = TrackmaniaEnv.normal_projection(
+      self.map_centerline[self.next_checkpoint],
+      self.map_centerline[self.next_checkpoint - 1],
+      self.location
+    )
+
+    centerline_distance += TrackmaniaEnv.norm(self.prev_projection - projection)
+    self.prev_projection = projection
+
     # check wall contact
-    if TrackmaniaEnv.norm(self.location - projection) > 11.0:
-      centerline_distance -= 10.0
+    penalty = 0.0
+    if (self.view_buffer[-self.wall_number:] < TrackVisualizer.CONTACT_THRESHOLD).any():
+      penalty = (self.speed_buffer[-1]**2) * 225.0
+
     # check stopped
     if self.step_counter > 10 and self.speed_buffer[-1] < 0.001:
-      centerline_distance -= 100.0
+      centerline_distance -= 500.0
       self.rspwn = True
       self.done = True
-
-    n1 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-self.prev_projection)
-    n2 = TrackmaniaEnv.norm(self.map_centerline[self.next_checkpoint]-projection)
-    # advancement
-    if n2 < n1:
-      centerline_distance += n1-n2
-      self.prev_projection = projection
-
+    
     self.done |= bool(self.data_getter.game_data[GameDataGetter.I_FINISH])
     self.rspwn |= self.done
-    return centerline_distance
+
+    return centerline_distance - penalty
 
 
   def reset(self):
@@ -318,9 +331,16 @@ class TrackmaniaEnv(Env):
     
     return self.obs_buffer, reward, self.done, {}
 
-
 if __name__ == '__main__':
-  env = TrackmaniaEnv('.\\Maps\\TurboTrack.Map.txt', human_driver=True)
-  env.reset()
-  for i in range(10000):
-    env.step([0,0])
+  env = TrackmaniaEnv('.\\Maps\\TurboTrack.Map.txt', human_driver=False)
+  big = []
+  for i in range(2):
+    print(env.flip)
+    env.reset()
+    start = time.time()
+    while not env.step([0,0])[2]:
+      big.append(time.time()-start)
+      print(env.view_buffer[-1])
+      start = time.time()
+      continue
+  print(sum(big)/len(big))
