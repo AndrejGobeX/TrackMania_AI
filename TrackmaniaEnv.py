@@ -4,6 +4,8 @@ import numpy as np
 import math
 import time
 
+from stable_baselines3.common.env_checker import check_env
+
 from MapExtractor import get_map_data
 
 from Commands import (
@@ -94,7 +96,7 @@ class TrackmaniaEnv(Env):
     self.prev_distance = 0.0
 
     # setup Trackmania bridge
-    self.data_getter = GameDataGetter(extended=True)
+    self.data_getter = GameDataGetter()
 
     # setup visualizer and lidar
     self.visualizer = TrackVisualizer(self.map)
@@ -180,7 +182,7 @@ class TrackmaniaEnv(Env):
       tm_steer(action[0])
       if action[1] > 0.0:
         tm_accelerate(action[1])
-      elif self.speed_buffer[-1] > 0.07:
+      elif self.data_getter.game_data[GameDataGetter.I_GEAR] > 0.0:
         tm_brake(-action[1])
       
       tm_update()
@@ -315,6 +317,7 @@ class TrackmaniaEnv(Env):
       self.rspwn = False
       self.respawn()
 
+    self.start_time = time.time()
     return self.obs_buffer
 
 
@@ -328,19 +331,18 @@ class TrackmaniaEnv(Env):
     # if self.rspwn:
     #   self.rspwn = False
     #   self.respawn()
+
+    if self.done:
+      self.lap_time = round(time.time() - self.start_time, 3)
     
     return self.obs_buffer, reward, self.done, {}
 
+
 if __name__ == '__main__':
   env = TrackmaniaEnv('.\\Maps\\TurboTrack.Map.txt', human_driver=False)
-  big = []
+  #check_env(env)
+
   for i in range(2):
-    print(env.flip)
     env.reset()
-    start = time.time()
     while not env.step([0,0])[2]:
-      big.append(time.time()-start)
-      print(env.view_buffer[-1])
-      start = time.time()
       continue
-  print(sum(big)/len(big))

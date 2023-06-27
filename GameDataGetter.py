@@ -21,11 +21,9 @@ class GameDataGetter:
     I_DY = 12
     I_DZ = 13
     # GameData array length
-    SIZE = 11
+    SIZE = 14
 
-    def __init__(self, localhost = "127.0.0.1", port = 9000, extended=False):
-        if extended:
-            GameDataGetter.SIZE += 3
+    def __init__(self, localhost = "127.0.0.1", port = 9000):
         self.game_data = [0.0]*GameDataGetter.SIZE
         self.localhost = localhost
         self.port = port
@@ -50,6 +48,6 @@ class GameDataGetter:
                 self._fetch_data(s)
 
 if __name__ == "__main__":
-    data_getter = GameDataGetter(extended=True)
+    data_getter = GameDataGetter()
     while True:
         print(data_getter.game_data[GameDataGetter.I_DX])
