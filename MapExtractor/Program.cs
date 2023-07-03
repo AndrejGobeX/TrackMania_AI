@@ -23,7 +23,7 @@ namespace MapExtractor
 
                 List<Tuple<double, double>> arr_l = new List<Tuple<double, double>>();
                 List<Tuple<double, double>> arr_r = new List<Tuple<double, double>>();
-                Vec3 xyz = i.AbsolutePositionInMap;
+                Vec3 xyz = (Vec3)i.Coord*32;
 
                 if(i.Name == "RoadTechStart" || i.Name == "RoadTechFinish" || i.Name == "RoadTechStraight" || i.Name == "RoadTechCheckpoint")
                 {

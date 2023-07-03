@@ -107,7 +107,8 @@ class TrackVisualizer():
             :
         ].copy()
         
-        cv2.circle(img, TrackVisualizer.VIEW_CENTER, 1, color=[255,150,0], thickness=2)
+        if show:
+            cv2.circle(img, TrackVisualizer.VIEW_CENTER, 1, color=[255,150,0], thickness=2)
         img = rotate_image(img, TrackVisualizer.VIEW_CENTER, math.degrees(θ + math.pi/2))
         return self.lidar_13(img, show=show) / TrackVisualizer.MAX_DISTANCE
 
