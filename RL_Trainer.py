@@ -5,11 +5,14 @@ from stable_baselines3.common.monitor import Monitor
 from TrackmaniaEnv import TrackmaniaEnv as TMEnv
 
 from stable_baselines3.sac import SAC
+from stable_baselines3.a2c import A2C
+from stable_baselines3.ppo import PPO
+from stable_baselines3.td3 import TD3
 
 # config
-ALG = 'SAC'
+ALG = 'TD3'
 comment = '_equalizer_512_0o_2a'
-path = 'Algs//'+ALG+comment
+path = 'Algs\\'+ALG+comment
 
 
 # callbacks
@@ -46,13 +49,13 @@ class SaveReplayBufferCallback(BaseCallback):
     
 
 policy = 'MlpPolicy'
-run_name = "first_run"
+run_name = "second_run"
 
 log_path = os.path.join(path, "logs")
 tensorboard_path = os.path.join(path, "tensorboard")
 replay_buffer_path = os.path.join(path, "replay_buffer.pkl")
 best_model_path = os.path.join(log_path, "best_model.zip")
-map_file = '.\\Maps\\Nascar2.Map.txt'
+map_file = '.\\Maps\\Sunset.Map.txt'
 #load_replay = False
 reset_timesteps = False
 
@@ -64,13 +67,13 @@ checkpoint_callback = CheckpointCallback(save_freq=2_000, save_path=log_path, na
 lap_time_callback = LaptimeCallback()
 eval_callback = EvalCallback(eval_env=env, best_model_save_path=log_path, eval_freq=2_000, callback_after_eval=lap_time_callback)
 save_replay_buffer_callback = SaveReplayBufferCallback(save_path=replay_buffer_path, save_freq=2_000)
-callbacks = [checkpoint_callback, save_replay_buffer_callback, eval_callback]
+callbacks = [checkpoint_callback, eval_callback]#, save_replay_buffer_callback, ]
 
 # training
 if os.path.exists(best_model_path):
-    model = SAC.load(best_model_path, env=env, verbose=2, tensorboard_log=tensorboard_path)
+    model = TD3.load(best_model_path, env=env, verbose=2, tensorboard_log=tensorboard_path)
 else:
-    model = SAC(policy, env=env, verbose=2, gamma=0.999, tensorboard_log=tensorboard_path, device='cpu')
+    model = TD3(policy, env=env, verbose=2, gamma=0.999, tensorboard_log=tensorboard_path, device='cpu')
 
 if os.path.exists(replay_buffer_path):
     model.load_replay_buffer(replay_buffer_path)
