@@ -12,3 +12,4 @@
 *.tflite
 
 .idea/*
+MapExtractor/*

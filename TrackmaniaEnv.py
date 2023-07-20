@@ -24,7 +24,7 @@ from TrackVisualizer import TrackVisualizer
 class TrackmaniaEnv(Env):
 
 
-  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, action_duration:float=0.05, obs_duration:float=0.0021, human_driver:bool=False):
+  def __init__(self, map_path:str, obs_history:int=0, action_history:int=2, action_duration:float=0.05, obs_duration:float=0.0021, start_delay:float=1.9, human_driver:bool=False):
     """Gym(nasium) compatible env for imitation/reinforcement learning in Trackmania.
 
     ### Parameters
@@ -35,7 +35,19 @@ class TrackmaniaEnv(Env):
     action_history : int, (default 2)
         Number of previous actions to keep in the observation.
         The total number of previous actions will be equal to:
-        obs_history + action_history
+        obs_history + action_history.
+    action_duration : float, (default 0.05)
+        Desired amount of time between obtaining an observation and sending an action in seconds.
+        If it takes less than action_duration, the thread will wait the rest of the time.
+        If it takes more, the thread will print a timeout.
+    obs_duration : float, (default 0.0021)
+        Desired amount of time between sending an action and obtaining an observation in seconds.
+        If it takes less than obs_duration, the thread will wait the rest of the time.
+        If it takes more, the thread will print a timeout.
+    start_delay : float, (default 1.9)
+        The amount of time to wait after each restart (waiting for the countdown).
+        If training, leave the default value.
+        If validating, set to 0.0
     human_driver : bool, (default False)
         If True, env will not apply any action.
     """
@@ -79,6 +91,7 @@ class TrackmaniaEnv(Env):
     # respawning (true first time)
     self.done = False
     self.lap_time = None
+    self.start_delay = start_delay
     
     # timestep equalizer
     self.action_duration = action_duration
@@ -127,7 +140,8 @@ class TrackmaniaEnv(Env):
     tm_reset()
     tm_update()
     tm_respawn()
-    time.sleep(1.9)
+    if self.start_delay > 0.0:
+      time.sleep(self.start_delay)
 
     self.next_checkpoint = 1
     self.location[0] = self.data_getter.game_data[GameDataGetter.I_X]
@@ -263,19 +277,6 @@ class TrackmaniaEnv(Env):
               finish = True
             w = self.map[self.next_checkpoint][0:2] - self.map[self.next_checkpoint][2:4]
 
-    # projection on the centerline
-    '''k = self.map_centerline[self.next_checkpoint]-self.map_centerline[self.next_checkpoint-1]
-    if k[0] == 0:
-        projection = np.array([self.map_centerline[self.next_checkpoint][0],self.location[1]])
-    else:
-        k = k[1]/k[0]
-        n = self.map_centerline[self.next_checkpoint][1] - k*self.map_centerline[self.next_checkpoint][0]
-        projection = (self.location[0] + k*self.location[1] - k*n)/(1+k**2)
-        projection = np.array([
-            projection,
-            projection*k + n
-        ])
-    '''
     projection = TrackmaniaEnv.normal_projection(
       self.map_centerline[self.next_checkpoint],
       self.map_centerline[self.next_checkpoint - 1],

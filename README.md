@@ -3,26 +3,29 @@ Neural network driver for Trackmania
 ## Intro and goals
 Computer vision and self-driving cars are one of the most common topics in ML/AI nowadays. As I am new in the ML/AI world, I wanted to experiment and play with AI cars.
 I played Trackmania when I was young and figured that it could be a good environment for this project.\
-~~Goal here is to make a decent driver. It is not (yet) a racing material.~~\
-New goal is to make a competitive driver (against other AI's) and, hopefully, advance this project to the real car (we have already tested the Maniack net on an RC car, teaser below).\
+New goal is to make a competitive driver (against other AI's) and, hopefully, advance this project to the real car (we have already tested a supervised net on an RC car, gif below).\
 If you have any ideas, comments or improvements, let me know.
 
-![Preview RC](Engines/rc_car_preview.gif)
+<p align="center">
+     <video width="320" height="240" controls>
+        <source src="demo2.mp4" type="video/mp4">
+    </video> 
+</p>
+<p align="center">
+    <i>AI in action</i>
+</p>
+
+<p align="center">
+    <img src="rc_car_preview.gif" alt="animated" width="500"/>
+</p>
+<p align="center">
+    <i>Toy car demo</i>
+</p>
+
 
 ## Details
-This project uses both supervised and reinforcement approaches.
-### Supervised approach
-The dataset is split into two categories: third_person and first_person, based on the camera.\
-Networks are located in `Engines/` directory.
-For now, I've made two supervised networks. Each of them outputs a 4-number array which represents probabilities of certain arrow keys being pressed (0.0 - 1.0). Threshold for each of the arrows can be tweaked independetly. ~In the future, it will be tied to the model.~\
-*Neptune* is a convolutional network containing two conv2d layers. It just takes a 50x50 modded image and pops out four probabilities.\
-![Neptune mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/neptune_mod.png?raw=true)\
-*Maniack*, on the other hand, uses a 10-number vector as input. It represents normalized distances from the bottom of the modded image to the nearest black pixel above. This can be enhanced by using more lines and using horizontal distances measured from the middle, which I might try next time.\
-![Maniack mod](https://github.com/AndrejGobeX/TrackMania_AI/blob/main/Engines/maniack_mod.png?raw=true)\
-Both of these networks have shown good results and are realtively quickly trained. However, in order to get to human-like results, they require a bigger (way bigger) dataset, with a better driver (I am not that bad :), but in order for these networks to be very good, you would need nearly perfect runs).
-### Neuroevolution approach
-In orderd to make a better AI, I tried neuroevolution. This is done with NEAT and follows the same idea as the *Maniack* network. The method of learning is completely different, but for some reason I was unsuccessful with this approach. I left the scripts here if someone wants to try them out.
-### SAC/PPO Reinforcement approach
+**This branch deals with a new gymnasium env for reinforcement algorithms. Please view the old `main` branch for supervised, neuroevuolution and old reinforcement algorithms.**\
+The `TrackmaniaEnv.py` file implements the new env for RL. You can tweak the number of previous observations and actions that will be stacked into the next observation.
 Lately, I am working on implementing the SAC algorithm, as it has shown great results in various enviromnents. I have made a gym that implements a simplified version of the reward function presented in a paper by Florian Fuchs, Yunlong Song, Elia Kaufmann, Davide Scaramuzza, and Peter Dürr ([Super-Human Performance in Gran Turismo Sport Using Deep Reinforcement Learning](https://rpg.ifi.uzh.ch/docs/RAL21_Fuchs.pdf)). In the video([link](https://youtu.be/Zeyv1bN9v4A)) it can be seen how good the AI performs. As for this repo, it is still in development. I would also like to try out different algorithms with the same gym in order to benchmark the results.
 ## Contents
 Since I am focusing more on the SAC right now, some scripts are left unchanged. You are free to edit them if you find something messy. Files with "*" are discontinued for now.
