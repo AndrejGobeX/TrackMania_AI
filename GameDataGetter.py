@@ -48,6 +48,29 @@ class GameDataGetter:
                 self._fetch_data(s)
 
 if __name__ == "__main__":
+    import Commands
+    Commands.tm_steer(-1.0)
+    Commands.tm_accelerate(0.7)
+    Commands.tm_update()
+
     data_getter = GameDataGetter()
-    while True:
-        print(data_getter.game_data[GameDataGetter.I_DX])
+    with open('Maps/OxideStation.Map.dodatak', 'w') as file:
+        while not data_getter.game_data[GameDataGetter.I_FINISH]:
+            file.write(str(
+                (
+                    data_getter.game_data[GameDataGetter.I_X],
+                    data_getter.game_data[GameDataGetter.I_Z],
+                    data_getter.game_data[GameDataGetter.I_Y],
+                    data_getter.game_data[GameDataGetter.I_DISTANCE]
+                )
+            )+'\n')
+            if data_getter.game_data[GameDataGetter.I_SPEED]*3.6 > 50:
+                Commands.tm_accelerate(0.0)
+                Commands.tm_update()
+            else:
+                Commands.tm_accelerate(0.7)
+                Commands.tm_update()
+            time.sleep(0.5)
+        Commands.tm_reset()
+        Commands.tm_update()
+            

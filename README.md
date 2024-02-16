@@ -102,6 +102,8 @@ The pip freeze output of the packages:
 * matplotlib==3.7.1
 * stable-baselines3==2.0.0
 * opencv-python==4.7.0.72
+* pywin32==306
 * vgamepad==0.0.8
+* torch==2.1.0.dev20230628+cu121 (nightly cuda 12.1)
 
-All other packages should be installed as dependencies.
+All other packages should be installed automatically as dependencies.
